@@ -17,7 +17,7 @@
 - E-Mail: shengjunhu@foxmail.com
 - GitHub: https://github.com/shengjunhu
 
-### About Third Libraries
+### About Third Party Libraries
 - [libjpeg-turbo][2]
 - [libyuv][3]
 - [libusb][4]
