@@ -1,0 +1,3 @@
+rootProject.name='android_sample_usbcamera'
+include ':sample'
+include ':sdk_usb_camera'
