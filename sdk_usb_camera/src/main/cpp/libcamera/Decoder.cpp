@@ -3,7 +3,10 @@
 //
 
 #include "Decoder.h"
-#include <turbojpeg.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 Decoder::Decoder(int width, int height) : width(width), height(height),
     flags(0), subSample(0), colorSpace(0) {
@@ -33,3 +36,7 @@ Decoder::~Decoder()  {
         handle = nullptr;
     }
 }
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

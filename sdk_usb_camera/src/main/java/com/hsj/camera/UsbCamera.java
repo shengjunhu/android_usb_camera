@@ -5,13 +5,13 @@ import android.view.Surface;
 
 /**
  * @Author:Hsj
- * @Date:2020-08-31
- * @Class:UVCCamera2
- * @Desc:UVCCamera2
+ * @Date:2022/1/13
+ * @Class:UsbCamera
+ * @Desc:UsbCamera
  */
-public final class UVCCamera {
+public final class UsbCamera {
 
-    private static final String TAG = "UVCCamera";
+    private static final String TAG = "UsbCamera";
     //Frame Format
     public static final int FRAME_FORMAT_MJPEG = 0;
     public static final int FRAME_FORMAT_YUYV  = 1;
@@ -35,7 +35,7 @@ public final class UVCCamera {
 
     private final long nativeObj;
 
-    public UVCCamera() {
+    public UsbCamera() {
         this.nativeObj = nativeInit();
     }
 

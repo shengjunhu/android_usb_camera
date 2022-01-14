@@ -2,8 +2,8 @@
 // Created by Hsj on 2022/1/13.
 //
 
-#ifndef ANDROID_UVCCAMERA2_COMMON_H
-#define ANDROID_UVCCAMERA2_COMMON_H
+#ifndef ANDROID_USB_CAMERA_COMMON_H
+#define ANDROID_USB_CAMERA_COMMON_H
 
 #include <jni.h>
 #include <unistd.h>
@@ -34,10 +34,10 @@ uint64_t timeMs();
 #define SAFE_DELETE_ARRAY(p) {if(p) { delete [](p); (p) = NULL;}}
 
 #ifndef LOG_TAG
-    #define LOG_TAG "UVCCamera"
+    #define LOG_TAG "UsbCamera"
 #endif
 
-#ifdef LOG_SWITCH
+#ifdef SWITCH_LOG
     #define LOGI(FMT,...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "[%d*%s:%d:%s]:" FMT,	\
 							gettid(), basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
     #define LOGD(FMT,...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, "[%d*%s:%d:%s]:" FMT,\
@@ -57,4 +57,4 @@ uint64_t timeMs();
 }  // extern "C"
 #endif
 
-#endif //ANDROID_UVCCAMERA2_COMMON_H
+#endif //ANDROID_USB_CAMERA_COMMON_H

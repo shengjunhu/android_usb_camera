@@ -2,8 +2,8 @@
 // Created by Hsj on 2022/1/13.
 //
 
-#ifndef ANDROID_UVCCAMERA2_PREVIEW_H
-#define ANDROID_UVCCAMERA2_PREVIEW_H
+#ifndef ANDROID_USB_CAMERA_PREVIEW_H
+#define ANDROID_USB_CAMERA_PREVIEW_H
 
 #include "Decoder.h"
 #include <android/native_window_jni.h>
@@ -49,4 +49,4 @@ public:
 }  // extern "C"
 #endif
 
-#endif //ANDROID_UVCCAMERA2_PREVIEW_H
+#endif //ANDROID_USB_CAMERA_PREVIEW_H

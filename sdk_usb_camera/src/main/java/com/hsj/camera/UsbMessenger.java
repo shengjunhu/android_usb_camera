@@ -7,4 +7,5 @@ package com.hsj.camera;
  * @Desc:
  */
 public final class UsbMessenger {
+
 }

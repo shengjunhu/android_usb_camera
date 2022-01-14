@@ -2,8 +2,15 @@
 // Created by Hsj on 2022/1/13.
 //
 
-#ifndef ANDROID_UVCCAMERA2_DECODER_H
-#define ANDROID_UVCCAMERA2_DECODER_H
+#ifndef ANDROID_USB_CAMERA_DECODER_H
+#define ANDROID_USB_CAMERA_DECODER_H
+
+#include <unistd.h>
+#include "turbojpeg.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     DATA_FORMAT_NV12   = 1, //yvu
@@ -28,4 +35,8 @@ public:
     uint8_t* convert2YUV(unsigned char *raw, size_t size);
 };
 
-#endif //ANDROID_UVCCAMERA2_DECODER_H
+#ifdef __cplusplus
+}  // extern "C"
+#endif
+
+#endif //ANDROID_USB_CAMERA_DECODER_H
