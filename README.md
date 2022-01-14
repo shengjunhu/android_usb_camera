@@ -1,6 +1,5 @@
-# android_sample_uvccamera2
-android sample of uvccamera,
-developed based on the [saki4510t/UVCCamera][1]
+# android_uvc_camera
+🔥 Usb Camera on Android
 
 ### Image
 <img src="doc/img/screenshot_1.png" width="320px"/>
@@ -21,8 +20,7 @@ developed based on the [saki4510t/UVCCamera][1]
 ### About License
 ```
 Copyright (c) 2020 shengjunhu
-Please compliance with the UVCCamera license
+Please comply with the relevant third party libraries license
 ```
 
-[1]: https://github.com/saki4510t/UVCCamera
-[2]: https://github.com/shengjunhu/android_sample_uvccamera/raw/master/doc/apk/UVCCamera_v22010616.apk
+[1]: https://github.com/shengjunhu/android_usb_camera/raw/master/doc/apk/android_usb_camera.apk

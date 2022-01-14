@@ -58,7 +58,7 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "UVCCamera2_v${variant.versionCode}.apk"
+            outputFileName = "android_usb_camera_v${variant.versionCode}.apk"
         }
     }
 
@@ -84,7 +84,7 @@ dependencies {
     //LeakCanary
     //debugImplementation rootProject.ext.dependencies.leak_canary
 
-    //UVCCamera2
-    //implementation project(path: ':sdk_uvc_camera2')
-    //implementation(name: 'sdk_uvc_camera2_v21040619_release', ext: 'aar')
+    //sdk_usb_camera
+    //implementation project(path: ':sdk_usb_camera')
+    //implementation(name: 'sdk_usb_camera_v21040619_release', ext: 'aar')
 }
