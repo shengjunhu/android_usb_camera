@@ -17,7 +17,7 @@ Decoder::Decoder(int width, int height) : width(width), height(height),
     dst = tjAlloc(out_size);
 }
 
-uint8_t* convert2YUV(unsigned char *raw, size_t size) {
+uint8_t* Decoder::convert2YUV(unsigned char *raw, size_t size) {
     //3. get raw_buffer info: subSample = TJSAMP_422
     tjDecompressHeader3(handle, raw, size, &width, &height, &subSample, &colorSpace);
     //4. decompress to YUV422 22ms (flag = 0、TJFLAG_FASTDCT)
@@ -27,11 +27,11 @@ uint8_t* convert2YUV(unsigned char *raw, size_t size) {
 
 Decoder::~Decoder()  {
     //5. destroy handle
-    if (LIKELY(out)) {
-        tjFree(out);
-        out = nullptr;
+    if (dst) {
+        tjFree(dst);
+        dst = nullptr;
     }
-    if (LIKELY(handle)) {
+    if (handle) {
         tjDestroy(handle);
         handle = nullptr;
     }

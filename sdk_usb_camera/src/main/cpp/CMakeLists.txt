@@ -38,15 +38,19 @@ add_subdirectory(libcamera)
 # link libraries: libturbo
 add_library(${MODULE_TURBO} STATIC IMPORTED)
 set_target_properties(${MODULE_TURBO} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libturbo.a)
+
 # link libraries: libyuv
 add_library(${MODULE_YUV} STATIC IMPORTED)
 set_target_properties(${MODULE_YUV} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libyuv.a)
+
 # link libraries: libusb
 add_library(${MODULE_USB} STATIC IMPORTED)
 set_target_properties(${MODULE_USB} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libusb.a)
+
 # link libraries: libuvc
 add_library(${MODULE_UVC} STATIC IMPORTED)
 set_target_properties(${MODULE_UVC} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libuvc.a)
+
 # link libraries: libcamera
 add_library(${MODULE_CORE} STATIC IMPORTED)
 set_target_properties(${MODULE_CORE} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libcore.a)

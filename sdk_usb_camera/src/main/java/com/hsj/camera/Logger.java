@@ -91,12 +91,12 @@ final class Logger {
     }
 
     private static void log(String tag, String msg, Throwable tr, char level) {
-        if (OPEN) {
-            if ('e' == level) {
-                print("e", tag, msg, tr);
-            } else if ('w' == level) {
-                print("w", tag, msg, tr);
-            } else if ('d' == level) {
+        if ('e' == level) {
+            print("e", tag, msg, tr);
+        } else if ('w' == level) {
+            print("w", tag, msg, tr);
+        } else if (OPEN) {
+            if ('d' == level) {
                 print("d", tag, msg);
             } else if ('i' == level) {
                 print("i", tag, msg);
