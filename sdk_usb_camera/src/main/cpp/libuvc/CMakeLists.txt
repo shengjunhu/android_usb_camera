@@ -20,7 +20,7 @@ set(DIR_SRC src/ctrl.c
         src/stream.c
         src/misc.c)
 
-option(HAVE_JPEG "Enable decode mjpeg" ON)
+option(HAVE_JPEG "Enable decode mjpeg" OFF)
 if(HAVE_JPEG)
   set(LIBUVC_HAS_JPEG TRUE)
   set(PKGCONFIG_JPEG_LDFLAG "-ljpeg")
@@ -28,8 +28,13 @@ if(HAVE_JPEG)
 endif()
 
 # main
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../libusb/libusb)
 add_library(${MODULE_UVC} STATIC ${DIR_SRC})
-target_include_directories(${MODULE_UVC} PRIVATE include)
 
-# copy out the lib binary
-set_target_properties(${MODULE_UVC} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${DIR_OUT}/${ANDROID_ABI}")
+# find system support library
+find_library(log-lib log)
+
+# target link libraries
+target_link_libraries(${MODULE_UVC} ${log-lib} ${MODULE_USB})

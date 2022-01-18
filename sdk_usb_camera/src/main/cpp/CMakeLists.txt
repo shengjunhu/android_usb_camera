@@ -10,65 +10,37 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 # switch log
 message(STATUS "Print log ${SWITCH_LOG}")
-if(${SWITCH_LOG})
+if (${SWITCH_LOG})
     add_definitions(-DSWITCH_LOG)
-endif()
+endif ()
 
 # set global variable
-set(MODULE_TURBO turbo)
 set(MODULE_YUV   yuv)
 set(MODULE_USB   usb)
 set(MODULE_UVC   uvc)
 set(MODULE_CORE  core)
 set(MODULE_MAIN  camera)
-set(DIR_OUT      ${CMAKE_CURRENT_SOURCE_DIR}/obj)
+set(MODULE_TURBO turbojpeg)
 
-# module turbo
-add_subdirectory(libjpeg-turbo)
 # module yuv
 add_subdirectory(libyuv)
 # module usb
 add_subdirectory(libusb)
 # module uvc
 add_subdirectory(libuvc)
-# module camera
+# module turbo
+add_subdirectory(libjpeg-turbo)
+# module core
 add_subdirectory(libcamera)
 
-#[[
-# link libraries: libturbo
-add_library(${MODULE_TURBO} STATIC IMPORTED)
-set_target_properties(${MODULE_TURBO} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libturbo.a)
-
-# link libraries: libyuv
-add_library(${MODULE_YUV} STATIC IMPORTED)
-set_target_properties(${MODULE_YUV} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libyuv.a)
-
-# link libraries: libusb
-add_library(${MODULE_USB} STATIC IMPORTED)
-set_target_properties(${MODULE_USB} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libusb.a)
-
-# link libraries: libuvc
-add_library(${MODULE_UVC} STATIC IMPORTED)
-set_target_properties(${MODULE_UVC} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libuvc.a)
-
-# link libraries: libcamera
-add_library(${MODULE_CORE} STATIC IMPORTED)
-set_target_properties(${MODULE_CORE} PROPERTIES IMPORTED_LOCATION ${DIR_OUT}/${ANDROID_ABI}/libcore.a)
-]]
-
 # moudle main
-include_directories(Common.h libcamera)
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}/Common.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/libcamera)
 add_library(${MODULE_MAIN} SHARED Common.cpp OnLoad.cpp)
 
 # find system support library
 find_library(log-lib log)
 
 # target link libraries
-target_link_libraries(${MODULE_MAIN}
-                      ${log-lib}
-                      android
-                      ${MODULE_TURBO}
-                      ${MODULE_YUV}
-                      ${MODULE_USB}
-                      ${MODULE_UVC}
-                      ${MODULE_CORE})
+target_link_libraries(${MODULE_MAIN} ${log-lib} android ${MODULE_CORE})

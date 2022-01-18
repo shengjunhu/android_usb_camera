@@ -31,14 +31,14 @@ set(DIR_SRC source/compare.cc
             source/video_common.cc)
 
 if(${ANDROID_ABI} MATCHES "armeabi-v7a")
-  add_definitions(-DHAVE_JPEG)
+  # add_definitions(-DHAVE_JPEG)
   add_definitions(-DLIBYUV_NEON)
   set(DIR_ABI source/compare_neon.cc
               source/rotate_neon.cc
               source/scale_neon.cc
               source/row_neon.cc)
 elseif(${ANDROID_ABI} MATCHES "arm64-v8a")
-  add_definitions(-DHAVE_JPEG)
+  # add_definitions(-DHAVE_JPEG)
   add_definitions(-DLIBYUV_NEON)
   set(DIR_ABI source/compare_neon64.cc
               source/rotate_neon64.cc
@@ -48,8 +48,5 @@ endif()
 
 # main
 list(APPEND DIR_SRC ${DIR_ABI})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(${MODULE_YUV} STATIC ${DIR_SRC})
-target_include_directories(${MODULE_YUV} PRIVATE include)
-
-# copy out the lib binary
-set_target_properties(${MODULE_YUV} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${DIR_OUT}/${ANDROID_ABI}")

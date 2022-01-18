@@ -5,9 +5,9 @@
 #include <cstring>
 #include <malloc.h>
 #include "libyuv.h"
-#include "Common.h"
 #include "Decoder.h"
 #include "Preview.h"
+#include "../Common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +56,7 @@ void Preview::render(uint8_t *data) {
             break;
         case DATA_FORMAT_ERROR:
         default:
-            LOGE(TAG, "Error DataFormat %d to render", format);
+            LOGE("Error DataFormat %d to render", format);
             break;
     }
 }
@@ -116,10 +116,10 @@ void Preview::renderYUV422(const uint8_t *data) {
 //YUYV: 18ms (YUV422)
 void Preview::renderYUYV(const uint8_t *data) {
     libyuv::YUY2ToI422(data, stride_width,
-                       yuv422, pixelWidth,
+                       yuv422, width,
                        yuv422 + start_u, stride_uv,
                        yuv422 + start_v, stride_uv,
-                       pixelWidth, pixelHeight);
+                       width, height);
     ANativeWindow_Buffer buffer;
     if (LIKELY(0 == ANativeWindow_lock(window, &buffer, nullptr))) {
         auto *dest = (uint8_t *) buffer.bits;

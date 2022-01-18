@@ -7,17 +7,22 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
-# main include_directories
-#[[include_directories(
+# main
+include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../
-        ${CMAKE_CURRENT_BINARY_DIR}/../libjpeg-turbo/
-        ${CMAKE_CURRENT_SOURCE_DIR}/../libyuv/include/)]]
-add_library(${MODULE_CORE} STATIC Preview.cpp Decoder.cpp UsbMessenger.cpp UsbCamera.cpp)
-target_include_directories(${MODULE_CORE} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Common.h
         ${CMAKE_CURRENT_SOURCE_DIR}/../libjpeg-turbo
         ${CMAKE_CURRENT_SOURCE_DIR}/../libyuv/include)
+add_library(${MODULE_CORE} STATIC Preview.cpp Decoder.cpp UsbMessenger.cpp UsbCamera.cpp)
 
-# copy out the lib binary
-set_target_properties(${MODULE_CORE} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${DIR_OUT}/${ANDROID_ABI}")
+# find system support library
+find_library(log-lib log)
+
+# target link libraries
+target_link_libraries(
+        ${MODULE_CORE}
+        ${log-lib}
+        ${MODULE_USB}
+        ${MODULE_UVC}
+        ${MODULE_YUV}
+        ${MODULE_TURBO})

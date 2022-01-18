@@ -22,8 +22,14 @@ set(DIR_SRC libusb/core.c
             libusb/os/linux_netlink.c)
 
 # main
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}/android
+        ${CMAKE_CURRENT_SOURCE_DIR}/libusb
+        ${CMAKE_CURRENT_SOURCE_DIR}/libusb/os)
 add_library(${MODULE_USB} STATIC ${DIR_SRC})
-target_include_directories(${MODULE_USB} PRIVATE android libusb libusb/os)
 
-# copy out the lib binary
-set_target_properties(${MODULE_USB} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${DIR_OUT}/${ANDROID_ABI}")
+# find system support library
+find_library(log-lib log)
+
+# target link libraries
+target_link_libraries(${MODULE_USB} ${log-lib})
