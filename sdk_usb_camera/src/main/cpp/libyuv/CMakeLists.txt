@@ -44,6 +44,11 @@ elseif(${ANDROID_ABI} MATCHES "arm64-v8a")
               source/rotate_neon64.cc
               source/scale_neon64.cc
               source/row_neon64.cc)
+else()
+  set(DIR_ABI source/compare_gcc.cc
+              source/rotate_gcc.cc
+              source/scale_gcc.cc
+              source/row_gcc.cc)
 endif()
 
 # main

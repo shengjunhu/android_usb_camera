@@ -10,6 +10,10 @@
 #include <libgen.h>
 #include <android/log.h>
 
+#define STATUS_ERROR_PARAM -999
+#define STATUS_ERROR_NONE  -998
+#define STATUS_SUCCESS     0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,8 +53,10 @@ uint64_t timeMs();
 #else
     #define LOGI(...)
     #define LOGD(...)
-    #define LOGW(...)
-    #define LOGE(...)
+    #define LOGW(FMT,...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "[%d*%s:%d:%s]:" FMT,	\
+							gettid(), basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+    #define LOGE(FMT,...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "[%d*%s:%d:%s]:" FMT,\
+							gettid(), basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 #endif
 
 #ifdef __cplusplus

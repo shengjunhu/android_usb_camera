@@ -68,7 +68,7 @@ public final class CameraView extends SurfaceView implements SurfaceHolder.Callb
 
 //==================================================================================================
 
-    public void create(int frameW, int frameH, int frameType) {
+    public synchronized void create(int frameW, int frameH, int frameType) {
         if (nativeObj == 0 && frameW != 0 && frameH != 0 && surface != null) {
             nativeCreate(surface, frameW, frameH, frameType);
         } else {
@@ -81,24 +81,32 @@ public final class CameraView extends SurfaceView implements SurfaceHolder.Callb
     public synchronized void update(byte[] data) {
         if (nativeObj != 0) {
             nativeUpdate(nativeObj, data);
+        } else {
+            Logger.w(TAG, "destroy: already destroyed");
         }
     }
 
     public synchronized void update(ByteBuffer data) {
         if (nativeObj != 0) {
-            nativeUpdate2(nativeObj, data);
+            nativeRender(nativeObj, data);
+        }else {
+            Logger.w(TAG, "destroy: already destroyed");
         }
     }
 
     public synchronized void pause() {
         if (nativeObj != 0) {
             nativePause(nativeObj);
+        }else {
+            Logger.w(TAG, "destroy: already destroyed");
         }
     }
 
     private synchronized void destroy() {
         if (nativeObj != 0) {
             nativeDestroy(nativeObj);
+        } else {
+            Logger.w(TAG, "destroy: already destroyed");
         }
     }
 
@@ -108,7 +116,7 @@ public final class CameraView extends SurfaceView implements SurfaceHolder.Callb
 
     private native void nativeUpdate(long nativePtr, byte[] data);
 
-    private native void nativeUpdate2(long nativePtr, ByteBuffer data);
+    private native void nativeRender(long nativePtr, ByteBuffer data);
 
     private native void nativePause(long nativePtr);
 

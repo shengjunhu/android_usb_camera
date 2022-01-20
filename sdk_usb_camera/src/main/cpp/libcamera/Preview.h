@@ -42,7 +42,6 @@ public:
     ~Preview();
     void render(uint8_t *data);
     void pause();
-    void destroy();
 };
 
 #ifdef __cplusplus

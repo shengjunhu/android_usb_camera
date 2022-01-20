@@ -20,14 +20,14 @@ set(MODULE_USB   usb)
 set(MODULE_UVC   uvc)
 set(MODULE_CORE  core)
 set(MODULE_MAIN  camera)
-set(MODULE_TURBO turbojpeg)
+set(MODULE_TURBO turbojpeg-static)
 
-# module yuv
-add_subdirectory(libyuv)
 # module usb
 add_subdirectory(libusb)
 # module uvc
 add_subdirectory(libuvc)
+# module yuv
+add_subdirectory(libyuv)
 # module turbo
 add_subdirectory(libjpeg-turbo)
 # module core
@@ -43,4 +43,12 @@ add_library(${MODULE_MAIN} SHARED Common.cpp OnLoad.cpp)
 find_library(log-lib log)
 
 # target link libraries
-target_link_libraries(${MODULE_MAIN} ${log-lib} android ${MODULE_CORE})
+target_link_libraries(
+        ${MODULE_MAIN}
+        ${log-lib}
+        android
+        ${MODULE_USB}
+        ${MODULE_UVC}
+        ${MODULE_YUV}
+        ${MODULE_TURBO}
+        ${MODULE_CORE})

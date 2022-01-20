@@ -1,6 +1,5 @@
 package com.hsj.camera;
 
-import android.util.Log;
 import android.view.Surface;
 
 /**
@@ -13,9 +12,14 @@ public final class UsbCamera {
 
     private static final String TAG = "UsbCamera";
     //Frame Format
-    public static final int FRAME_FORMAT_MJPEG = 0;
-    public static final int FRAME_FORMAT_YUYV  = 1;
-    public static final int FRAME_FORMAT_DEPTH = 2;
+    public static final int FRAME_FORMAT_YUYV  = 0;
+    public static final int FRAME_FORMAT_MJPEG = 1;
+    public static final int FRAME_FORMAT_H264  = 2;
+    public static final int FRAME_FORMAT_H265  = 3;
+    //Pixel Format
+    public static final int PIXEL_FORMAT_RAW   = 0;
+    public static final int PIXEL_FORMAT_NV12  = 1;
+    public static final int PIXEL_FORMAT_GRAY  = 2;
     //Camera Status
     private static final int STATUS_ERROR_DESTROYED = 50;
     private static final int STATUS_ERROR_OPEN = 40;
@@ -28,26 +32,25 @@ public final class UsbCamera {
         System.loadLibrary("camera");
     }
 
-//=====================================Size class===================================================
-
-
 //======================================Java API====================================================
 
+    //C++ object id
     private final long nativeObj;
 
     public UsbCamera() {
         this.nativeObj = nativeInit();
     }
 
-    public final synchronized boolean create(int productId, int vendorId) {
-        if (this.nativeObj == 0) {
-            Log.e(TAG, "Can't be call after call destroy");
-            return false;
+    public final synchronized boolean open(int productId, int vendorId) {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
+            int status = nativeOpen(this.nativeObj, productId, vendorId);
+            Logger.d(TAG, "open: " + status);
+            ret = (STATUS_SUCCESS == status);
         } else {
-            int status = nativeCreate(this.nativeObj, productId, vendorId);
-            Logger.d(TAG, "create: " + status);
-            return STATUS_SUCCESS == status;
+            Logger.e(TAG, "open: already destroyed");
         }
+        return ret;
     }
 
     public final String[] getSupportFrameSize() {
@@ -55,66 +58,83 @@ public final class UsbCamera {
     }
 
     public final boolean setFrameSize(int width, int height, int frameFormat) {
-        if (this.nativeObj == 0) {
-            Log.w(TAG, "Can't be call after call destroy");
-            return false;
-        } else {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
             int status = nativeFrameSize(this.nativeObj, width, height, frameFormat);
             Logger.d(TAG, "setFrameSize: " + status);
-            return STATUS_SUCCESS == status;
+            ret = (STATUS_SUCCESS == status);
+        } else {
+            Logger.e(TAG, "setFrameSize: already destroyed");
         }
+        return ret;
     }
 
     public final boolean setFrameCallback(IFrameCallback frameCallback) {
-        if (this.nativeObj == 0) {
-            Log.w(TAG, "Can't be call after call destroy");
-            return false;
-        } else {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
             int status = nativeFrameCallback(this.nativeObj,frameCallback);
             Logger.d(TAG, "setFrameCallback: " + status);
-            return STATUS_SUCCESS == status;
+            ret = (STATUS_SUCCESS == status);
+        } else {
+            Logger.e(TAG, "setFrameCallback: already destroyed");
         }
+        return ret;
     }
 
     public final boolean setPreview(Surface surface){
-        if (this.nativeObj == 0) {
-            Log.w(TAG, "Can't be call after call setPreview");
-            return false;
-        } else {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
             int status = nativePreview(this.nativeObj, surface);
             Logger.d(TAG, "setPreview: " + status);
-            return STATUS_SUCCESS == status;
+            ret = (STATUS_SUCCESS == status);
+        } else {
+            Logger.e(TAG, "setPreview: already destroyed");
         }
+        return ret;
     }
 
     public final synchronized boolean start() {
-        if (this.nativeObj == 0) {
-            Log.w(TAG, "Can't be call after call destroy");
-            return false;
-        } else {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
             int status = nativeStart(this.nativeObj);
             Logger.d(TAG, "start: " + status);
-            return STATUS_SUCCESS == status;
+            ret = (STATUS_SUCCESS == status);
+        } else {
+            Logger.e(TAG, "start: already destroyed");
         }
+        return ret;
     }
 
     public final synchronized boolean stop() {
-        if (this.nativeObj == 0) {
-            Log.w(TAG, "Can't be call after call destroy");
-            return false;
-        } else {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
             int status = nativeStop(this.nativeObj);
             Logger.d(TAG, "stop: " + status);
-            return STATUS_SUCCESS == status;
+            ret = (STATUS_SUCCESS == status);
+        } else {
+            Logger.e(TAG, "stop: already destroyed");
         }
+        return ret;
+    }
+
+    public final synchronized boolean close() {
+        boolean ret = false;
+        if (this.nativeObj != 0) {
+            int status = nativeClose(this.nativeObj);
+            Logger.d(TAG, "close: " + status);
+            ret = (STATUS_SUCCESS == status);
+        } else {
+            Logger.e(TAG, "close: already destroyed");
+        }
+        return ret;
     }
 
     public final synchronized void destroy() {
-        if (this.nativeObj == 0) {
-            Logger.w(TAG, "destroy: already destroyed");
-        }else {
+        if (this.nativeObj != 0) {
             int status = nativeDestroy(this.nativeObj);
-            Logger.w(TAG, "destroy: " + status);
+            Logger.d(TAG, "destroy: " + status);
+        } else {
+            Logger.e(TAG, "destroy: already destroyed");
         }
     }
 
@@ -122,7 +142,7 @@ public final class UsbCamera {
 
     private native long nativeInit();
 
-    private native int nativeCreate(long nativeObj, int productId, int vendorId);
+    private native int nativeOpen(long nativeObj, int productId, int vendorId);
 
     private native int nativeFrameSize(long nativeObj, int width, int height, int pixelFormat);
 
@@ -133,6 +153,8 @@ public final class UsbCamera {
     private native int nativeStart(long nativeObj);
 
     private native int nativeStop(long nativeObj);
+
+    private native int nativeClose(long nativeObj);
 
     private native int nativeDestroy(long nativeObj);
 
