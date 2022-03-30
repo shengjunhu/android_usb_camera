@@ -6,9 +6,7 @@
 #define ANDROID_USB_CAMERA_DECODER_H
 
 #include <unistd.h>
-//#include <turbojpeg.h>
-//#include "turbojpeg.h"
-#include "../libjpeg-turbo/turbojpeg.h"
+#include "turbojpeg.h"
 
 #ifdef __cplusplus
 extern "C" {

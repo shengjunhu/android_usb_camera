@@ -9,7 +9,17 @@
 extern "C" {
 #endif
 
+class UsbMessenger {
+private:
 
+public:
+    UsbMessenger();
+    ~UsbMessenger();
+    int open(int vendorId, int productId, int fd);
+    int syncRequest(const char *request, char *response);
+    int close();
+    void destroy();
+};
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -6,8 +6,8 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -s")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -pthread")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 
 # set source
 set(DIR_SRC libusb/core.c

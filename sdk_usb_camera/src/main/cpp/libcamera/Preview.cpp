@@ -5,9 +5,9 @@
 #include <cstring>
 #include <malloc.h>
 #include "libyuv.h"
+#include "Common.h"
 #include "Decoder.h"
 #include "Preview.h"
-#include "../Common.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -16,15 +16,13 @@ final class Logger {
     //      1、增加控制台日志打印长度
     //      2、开关控制日志是否打印
     //      3、可添加自定义tag，默认：[Logger]
-    //      4、收集错误日志;
-    //      5、定时删除错误日志(错误日志删除工作交给TaskManager)
     //////////////////////////////////////////////////////////////
 
     private static String TAG = "[Logger]";
 
     private static final int MAX_LENGTH = 5000;
 
-    private static final boolean OPEN = true; //BuildConfig.DEBUG;
+    public static boolean OPEN = BuildConfig.DEBUG;
 
     private Logger() {
 

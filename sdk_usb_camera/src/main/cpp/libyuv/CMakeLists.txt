@@ -6,6 +6,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -s")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fexceptions")
 
 # set source
 set(DIR_SRC source/compare.cc
@@ -53,5 +54,5 @@ endif()
 
 # main
 list(APPEND DIR_SRC ${DIR_ABI})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(include)
 add_library(${MODULE_YUV} STATIC ${DIR_SRC})

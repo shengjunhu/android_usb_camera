@@ -25,12 +25,12 @@ public final class UsbMessenger {
         Logger.d(TAG, "UsbMessenger: " + this.nativeObj);
     }
 
-    public final synchronized boolean open(int productId, int vendorId) {
+    public final synchronized boolean open(int vendorId, int productId, int fileDescriptor) {
         boolean ret = false;
         if (this.nativeObj == 0) {
             Logger.e(TAG, "open: UsbMessenger native already destroyed");
         } else {
-            int status = nativeOpen(this.nativeObj, productId, vendorId);
+            int status = nativeOpen(this.nativeObj, vendorId, productId, fileDescriptor);
             Logger.d(TAG, "open: " + status);
             if (STATUS_SUCCESS < status) Logger.w(TAG, "open: had device opened");
             ret = (status == STATUS_SUCCESS);
@@ -79,7 +79,7 @@ public final class UsbMessenger {
 
     private native long nativeInit();
 
-    private native int nativeOpen(long nativeObj, int productId, int vendorId);
+    private native int nativeOpen(long nativeObj, int vendorId, int productId, int fd);
 
     private native int nativeSyncRequest(long nativeObj, byte[] request, byte[] response);
 

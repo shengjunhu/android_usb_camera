@@ -27,14 +27,13 @@ if(HAVE_JPEG)
   list(APPEND DIR_SRC src/frame-mjpeg.c)
 endif()
 
-# main
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libusb/libusb)
+
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/../libusb/libusb)
+
 add_library(${MODULE_UVC} STATIC ${DIR_SRC})
 
-# find system support library
-find_library(log-lib log)
-
 # target link libraries
-target_link_libraries(${MODULE_UVC} ${log-lib} ${MODULE_USB})
+target_link_libraries(${MODULE_UVC} ${MODULE_USB})

@@ -5,7 +5,6 @@
 #ifndef ANDROID_USB_CAMERA_PREVIEW_H
 #define ANDROID_USB_CAMERA_PREVIEW_H
 
-#include "Decoder.h"
 #include <android/native_window_jni.h>
 
 #ifdef __cplusplus

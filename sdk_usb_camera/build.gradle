@@ -15,9 +15,9 @@ android {
             cmake {
                 abiFilters "armeabi-v7a", "arm64-v8a"
                 cppFlags "-Wunused -frtti -fexceptions -mfpu=neon -fPIE"
-                arguments "-DSWITCH_LOG=ON",
-                          "-DANDROID_ARM_NEON=ON",
-                          "-DCMAKE_BUILD_TYPE=Release",
+                arguments "-DANDROID_ARM_NEON=ON",
+                          "-DANDROID_ARM_MODE=arm",
+                          "-DCMAKE_BUILD_TYPE=DEBUG",
                           "-DANDROID_PLATFORM=android-21"
             }
         }
@@ -44,7 +44,7 @@ android {
 
     android.libraryVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "sdk_uvc_camera2_v${defaultConfig.versionCode}_${variant.buildType.name}.aar"
+            outputFileName = "sdk_usb_camera_v${defaultConfig.versionCode}_${variant.buildType.name}.aar"
         }
     }
 

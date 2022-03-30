@@ -1,6 +1,8 @@
 package com.hsj.camera;
 
 import android.view.Surface;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * @Author:Hsj
@@ -11,130 +13,191 @@ import android.view.Surface;
 public final class UsbCamera {
 
     private static final String TAG = "UsbCamera";
-    //Frame Format
-    public static final int FRAME_FORMAT_YUYV  = 0;
-    public static final int FRAME_FORMAT_MJPEG = 1;
-    public static final int FRAME_FORMAT_H264  = 2;
-    public static final int FRAME_FORMAT_H265  = 3;
-    //Pixel Format
-    public static final int PIXEL_FORMAT_RAW   = 0;
-    public static final int PIXEL_FORMAT_NV12  = 1;
-    public static final int PIXEL_FORMAT_GRAY  = 2;
+    //Frame Format: These match the enums in cpp/libcamera/Camera.h
+    public static final int FRAME_FORMAT_YUYV        = 0x04;
+    public static final int FRAME_FORMAT_MJPEG       = 0x06;
+    public static final int FRAME_FORMAT_H264        = 0x08;
+    //Pixel Format: These match the enums in cpp/libcamera/Camera.h
+    public static final int PIXEL_FORMAT_RAW         = 0x04;
+    public static final int PIXEL_FORMAT_YUV420_888  = 0x0A;
     //Camera Status
-    private static final int STATUS_ERROR_DESTROYED = 50;
-    private static final int STATUS_ERROR_OPEN = 40;
-    private static final int STATUS_ERROR_SIZE = 30;
-    private static final int STATUS_ERROR_START = 20;
-    private static final int STATUS_ERROR_STOP = 10;
-    private static final int STATUS_SUCCESS = 0;
+    public static final int STATUS_OK   =  0;
+    public static final int STATUS_DESTROYED = -9;
 
     static {
         System.loadLibrary("camera");
+    }
+
+    public enum FLIP {
+        FLIP_H(1), FLIP_V(-1), FLIP_NONE(0);
+
+        private int flip;
+
+        FLIP(int flip){
+            this.flip = flip;
+        }
+
+        public int getValue(){
+            return flip;
+        }
+    }
+
+    public enum ROTATE {
+        ROTATE_0(0), ROTATE_90(90), ROTATE_180(180), ROTATE_270(270);
+
+        private int rotate;
+
+        ROTATE(int rotate){
+            this.rotate = rotate;
+        }
+
+        public int getValue(){
+            return rotate;
+        }
+    }
+
+    public static class SupportInfo {
+        public int format;
+        public int width;
+        public int height;
+        public int fps;
+        public ROTATE rotate;
+        public FLIP flip;
+
+        public SupportInfo(int format, int width, int height, int fps) {
+            this.format = format;
+            this.width  = width;
+            this.height = height;
+            this.fps    = fps;
+        }
+
+        public void setTransfer(ROTATE rotate, FLIP flip){
+            this.rotate = rotate;
+            this.flip = flip;
+        }
+
+        public String getInfo(){
+            String info = "Unknown";
+            if (format == FRAME_FORMAT_MJPEG){
+                info = "MJPEG ";
+            } else if (format == FRAME_FORMAT_YUYV){
+                info = "YUYV ";
+            } else if (format == FRAME_FORMAT_H264){
+                info = "H264 ";
+            }
+            info += width + " x " + height + " FPS: " + fps;
+            return info;
+        }
     }
 
 //======================================Java API====================================================
 
     //C++ object id
     private final long nativeObj;
+    private ByteBuffer frame;
 
     public UsbCamera() {
         this.nativeObj = nativeInit();
     }
 
-    public final synchronized boolean open(int productId, int vendorId) {
-        boolean ret = false;
+    public UsbCamera(boolean debug) {
+        this.nativeObj = nativeInit();
+        Logger.OPEN = debug;
+    }
+
+    public final synchronized int open(int vendorId, int productId, int fileDescriptor) {
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativeOpen(this.nativeObj, productId, vendorId);
+            status = nativeOpen(this.nativeObj, vendorId, productId, fileDescriptor);
             Logger.d(TAG, "open: " + status);
-            ret = (STATUS_SUCCESS == status);
         } else {
             Logger.e(TAG, "open: already destroyed");
         }
-        return ret;
+        return status;
     }
 
-    public final String[] getSupportFrameSize() {
-        return null;
-    }
-
-    public final boolean setFrameSize(int width, int height, int frameFormat) {
-        boolean ret = false;
+    public final synchronized int getSupportInfo(List<SupportInfo> supportInfos) {
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativeFrameSize(this.nativeObj, width, height, frameFormat);
-            Logger.d(TAG, "setFrameSize: " + status);
-            ret = (STATUS_SUCCESS == status);
+            status = nativeGetSupportInfo(this.nativeObj, supportInfos);
+            Logger.d(TAG, "getSupportInfo: " + status);
         } else {
-            Logger.e(TAG, "setFrameSize: already destroyed");
+            Logger.e(TAG, "getSupportInfo: already destroyed");
         }
-        return ret;
+        return status;
     }
 
-    public final boolean setFrameCallback(IFrameCallback frameCallback) {
-        boolean ret = false;
+    public final synchronized int setSupportInfo(SupportInfo supportInfo) {
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativeFrameCallback(this.nativeObj,frameCallback);
+            status = nativeSetSupportInfo(this.nativeObj, supportInfo);
+            Logger.d(TAG, "setSupportInfo: " + status);
+        } else {
+            Logger.e(TAG, "setSupportInfo: already destroyed");
+        }
+        return status;
+    }
+
+    public final synchronized int setFrameCallback(int pixelFormat, FrameCallback callback) {
+        int status = STATUS_DESTROYED;
+        if (this.nativeObj != 0) {
+            status = nativeFrameCallback(this.nativeObj, pixelFormat, callback);
             Logger.d(TAG, "setFrameCallback: " + status);
-            ret = (STATUS_SUCCESS == status);
         } else {
             Logger.e(TAG, "setFrameCallback: already destroyed");
         }
-        return ret;
+        return status;
     }
 
-    public final boolean setPreview(Surface surface){
-        boolean ret = false;
+    public final synchronized int setPreview(Surface surface){
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativePreview(this.nativeObj, surface);
+            status = nativePreview(this.nativeObj, surface);
             Logger.d(TAG, "setPreview: " + status);
-            ret = (STATUS_SUCCESS == status);
         } else {
             Logger.e(TAG, "setPreview: already destroyed");
         }
-        return ret;
+        return status;
     }
 
-    public final synchronized boolean start() {
-        boolean ret = false;
+    public final synchronized int start() {
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativeStart(this.nativeObj);
+            status = nativeStart(this.nativeObj);
             Logger.d(TAG, "start: " + status);
-            ret = (STATUS_SUCCESS == status);
         } else {
             Logger.e(TAG, "start: already destroyed");
         }
-        return ret;
+        return status;
     }
 
-    public final synchronized boolean stop() {
-        boolean ret = false;
+    public final synchronized int stop() {
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativeStop(this.nativeObj);
+            status = nativeStop(this.nativeObj);
             Logger.d(TAG, "stop: " + status);
-            ret = (STATUS_SUCCESS == status);
         } else {
             Logger.e(TAG, "stop: already destroyed");
         }
-        return ret;
+        return status;
     }
 
-    public final synchronized boolean close() {
-        boolean ret = false;
+    public final synchronized int close() {
+        int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            int status = nativeClose(this.nativeObj);
+            status = nativeClose(this.nativeObj);
             Logger.d(TAG, "close: " + status);
-            ret = (STATUS_SUCCESS == status);
         } else {
             Logger.e(TAG, "close: already destroyed");
         }
-        return ret;
+        return status;
     }
 
     public final synchronized void destroy() {
         if (this.nativeObj != 0) {
-            int status = nativeDestroy(this.nativeObj);
-            Logger.d(TAG, "destroy: " + status);
+            nativeDestroy(this.nativeObj);
         } else {
-            Logger.e(TAG, "destroy: already destroyed");
+            Logger.w(TAG, "destroy: already destroyed");
         }
     }
 
@@ -142,11 +205,13 @@ public final class UsbCamera {
 
     private native long nativeInit();
 
-    private native int nativeOpen(long nativeObj, int productId, int vendorId);
+    private native int nativeOpen(long nativeObj, int vendorId, int productId, int fd);
 
-    private native int nativeFrameSize(long nativeObj, int width, int height, int pixelFormat);
+    private native int nativeGetSupportInfo(long nativeObj, List<SupportInfo> supportInfo);
 
-    private native int nativeFrameCallback(long nativeObj, IFrameCallback frameCallback);
+    private native int nativeSetSupportInfo(long nativeObj, SupportInfo supportInfo);
+
+    private native int nativeFrameCallback(long nativeObj, int pixelFormat, FrameCallback callback);
 
     private native int nativePreview(long nativeObj, Surface surface);
 
@@ -156,6 +221,6 @@ public final class UsbCamera {
 
     private native int nativeClose(long nativeObj);
 
-    private native int nativeDestroy(long nativeObj);
+    private native void nativeDestroy(long nativeObj);
 
 }
