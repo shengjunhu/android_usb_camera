@@ -15,7 +15,8 @@ private:
 public:
     UsbMessenger();
     ~UsbMessenger();
-    int open(int vendorId, int productId, int fd);
+    int connect(int fd);
+    int open(int vendorId, int productId, int bus_num, int dev_num);
     int syncRequest(const char *request, char *response);
     int close();
     void destroy();

@@ -1,5 +1,6 @@
 package com.hsj.camera;
 
+import android.text.TextUtils;
 import android.view.Surface;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -21,7 +22,8 @@ public final class UsbCamera {
     public static final int PIXEL_FORMAT_RAW         = 0x04;
     public static final int PIXEL_FORMAT_YUV420_888  = 0x0A;
     //Camera Status
-    public static final int STATUS_OK   =  0;
+    public static final int STATUS_OK        =  0;
+    public static final int STATUS_ERROR     = -10;
     public static final int STATUS_DESTROYED = -9;
 
     static {
@@ -105,10 +107,29 @@ public final class UsbCamera {
         Logger.OPEN = debug;
     }
 
-    public final synchronized int open(int vendorId, int productId, int fileDescriptor) {
+    public final synchronized int open(int fileDescriptor) {
         int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            status = nativeOpen(this.nativeObj, vendorId, productId, fileDescriptor);
+            status = nativeConnect(this.nativeObj, fileDescriptor);
+            Logger.d(TAG, "open: " + status);
+        } else {
+            Logger.e(TAG, "open: already destroyed");
+        }
+        return status;
+    }
+
+    public final synchronized int open(int vendorId, int productId, String deviceName) {
+        int status = STATUS_DESTROYED;
+        if (this.nativeObj != 0) {
+            int busNum = 0, devNum = 0;
+            if (!TextUtils.isEmpty(deviceName)){
+                final String[] arr = deviceName.split("/");
+                if (arr.length > 2) {
+                    busNum = Integer.parseInt(arr[arr.length - 2]);
+                    devNum = Integer.parseInt(arr[arr.length - 1]);
+                }
+            }
+            status = nativeOpen(this.nativeObj, vendorId, productId, busNum, devNum);
             Logger.d(TAG, "open: " + status);
         } else {
             Logger.e(TAG, "open: already destroyed");
@@ -182,15 +203,13 @@ public final class UsbCamera {
         return status;
     }
 
-    public final synchronized int close() {
-        int status = STATUS_DESTROYED;
+    public final synchronized void close() {
         if (this.nativeObj != 0) {
-            status = nativeClose(this.nativeObj);
+            int status = nativeClose(this.nativeObj);
             Logger.d(TAG, "close: " + status);
         } else {
             Logger.e(TAG, "close: already destroyed");
         }
-        return status;
     }
 
     public final synchronized void destroy() {
@@ -205,7 +224,9 @@ public final class UsbCamera {
 
     private native long nativeInit();
 
-    private native int nativeOpen(long nativeObj, int vendorId, int productId, int fd);
+    private native int nativeConnect(long nativeObj, int fd);
+
+    private native int nativeOpen(long nativeObj, int vendorId, int productId, int bus, int dev);
 
     private native int nativeGetSupportInfo(long nativeObj, List<SupportInfo> supportInfo);
 

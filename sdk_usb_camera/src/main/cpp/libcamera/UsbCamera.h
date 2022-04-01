@@ -49,17 +49,19 @@ extern "C" {
 
 class UsbCamera {
 private:
+    int _fd;
+    uvc_stream_ctrl_t ctrl;
     uvc_device_t *uvc_device;
     uvc_context_t *uvc_context;
     uvc_device_handle_t *uvc_device_handle;
-    uvc_stream_ctrl_t ctrl;
 
     volatile StatusInfo status;
     inline const StatusInfo getStatus() const;
 public:
     UsbCamera();
     ~UsbCamera();
-    int open(int vendorId, int productId, int fd);
+    int connect(int fd);
+    int open(int vendorId, int productId, int bus_num, int dev_num);
     int getSupportInfo(std::vector<SupportInfo> &supportInfos);
     int setSupportInfo(SupportInfo &supportInfo);
     int setFrameCallback(int pixelFormat,jobject callback);

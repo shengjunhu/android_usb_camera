@@ -528,6 +528,7 @@ typedef struct uvc_still_ctrl {
 } uvc_still_ctrl_t;
 
 uvc_error_t uvc_init(uvc_context_t **ctx, struct libusb_context *usb_ctx);
+uvc_error_t uvc_init_fd(uvc_context_t **ctx, struct libusb_context *usb_ctx);
 void uvc_exit(uvc_context_t *ctx);
 
 uvc_error_t uvc_get_device_list(
@@ -548,6 +549,16 @@ uvc_error_t uvc_find_device(
     uvc_context_t *ctx,
     uvc_device_t **dev,
     int vid, int pid, const char *sn);
+
+uvc_error_t uvc_find_device2(
+    uvc_context_t *ctx,
+    uvc_device_t **dev,
+    int vid, int pid, int bus_num, int dev_num);
+
+uvc_error_t uvc_find_device_opened(
+    uvc_context_t *ctx,
+    uvc_device_t *dev,
+    uvc_device_handle_t **devh, int fd);
 
 uvc_error_t uvc_find_devices(
     uvc_context_t *ctx,

@@ -33,11 +33,22 @@ static MESSENGER_ID nativeInit2(JNIEnv *env, jobject thiz) {
     return messengerId;
 }
 
-static jint nativeOpen2(JNIEnv *env, jobject thiz, MESSENGER_ID mId, jint vid, jint pid, jint fd) {
+static jint nativeConnect2(JNIEnv *env, jobject thiz, MESSENGER_ID mId, jint fd) {
     auto *messenger = reinterpret_cast<UsbMessenger *>(mId);
     jint ret = STATUS_NONE_INIT;
     if (messenger) {
-        ret = messenger->open(vid, pid, fd);
+        ret = messenger->connect(fd);
+    } else {
+        LOGE("connect: UsbMessenger had been release.");
+    }
+    return ret;
+}
+
+static jint nativeOpen2(JNIEnv *env, jobject thiz, MESSENGER_ID mId, jint vid, jint pid, jint bus, jint dev) {
+    auto *messenger = reinterpret_cast<UsbMessenger *>(mId);
+    jint ret = STATUS_NONE_INIT;
+    if (messenger) {
+        ret = messenger->open(vid, pid, bus, dev);
     } else {
         LOGE("open: UsbMessenger had been release.");
     }
@@ -59,7 +70,7 @@ static jint nativeSyncRequest2(JNIEnv *env, jobject thiz, MESSENGER_ID mId, jbyt
 
 static jint nativeClose2(JNIEnv *env, jobject thiz, MESSENGER_ID mId) {
     auto *messenger = reinterpret_cast<UsbMessenger *>(mId);
-    jint ret = STATUS_NONE_INIT;
+    jint ret = STATUS_SUCCESS;
     if (messenger) {
         ret = messenger->close();
     } else {
@@ -80,11 +91,12 @@ static void nativeDestroy2(JNIEnv *env, jobject thiz, MESSENGER_ID mId) {
 }
 
 static const JNINativeMethod USB_MESSENGER_METHODS[] = {
-    {"nativeInit",         "()J",             (void *) nativeInit2},
-    {"nativeOpen",         "(JIII)I",         (void *) nativeOpen2},
-    {"nativeSyncRequest",  "(J[B[B)I",        (void *) nativeSyncRequest2},
-    {"nativeClose",        "(J)I",            (void *) nativeClose2},
-    {"nativeDestroy",      "(J)V",            (void *) nativeDestroy2}
+    {"nativeInit",         "()J",       (void *) nativeInit2},
+    {"nativeConnect",      "(JI)I",     (void *) nativeConnect2},
+    {"nativeOpen",         "(JIIII)I",  (void *) nativeOpen2},
+    {"nativeSyncRequest",  "(J[B[B)I",  (void *) nativeSyncRequest2},
+    {"nativeClose",        "(J)I",      (void *) nativeClose2},
+    {"nativeDestroy",      "(J)V",      (void *) nativeDestroy2}
 };
 
 //=======================================UsbCamera==================================================
@@ -96,11 +108,22 @@ static CAMERA_ID nativeInit(JNIEnv *env, jobject thiz) {
     return cameraId;
 }
 
-static jint nativeOpen(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jint vid, jint pid, jint fd) {
+static jint nativeConnect(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jint fd) {
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     jint ret = STATUS_NONE_INIT;
     if (camera) {
-        ret = camera->open(vid, pid, fd);
+        ret = camera->connect(fd);
+    } else {
+        LOGE("open: UsbCamera had been release.");
+    }
+    return ret;
+}
+
+static jint nativeOpen(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jint vid, jint pid, jint bus, jint dev) {
+    auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
+    jint ret = STATUS_NONE_INIT;
+    if (camera) {
+        ret = camera->open(vid, pid, bus, dev);
     } else {
         LOGE("open: UsbCamera had been release.");
     }
@@ -231,7 +254,7 @@ static jint nativeStop(JNIEnv *env, jobject thiz, CAMERA_ID cameraId) {
 
 static jint nativeClose(JNIEnv *env, jobject thiz, CAMERA_ID cameraId) {
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
-    jint ret = STATUS_NONE_INIT;
+    jint ret = STATUS_SUCCESS;
     if (camera) {
         ret = camera->close();
     } else {
@@ -253,7 +276,8 @@ static void nativeDestroy(JNIEnv *env, jobject thiz, CAMERA_ID cameraId) {
 
 static const JNINativeMethod USB_CAMERA_METHODS[] = {
     {"nativeInit",          "()J",                                         (void *) nativeInit},
-    {"nativeOpen",          "(JIII)I",                                     (void *) nativeOpen},
+    {"nativeConnect",       "(JI)I",                                       (void *) nativeConnect},
+    {"nativeOpen",          "(JIIII)I",                                    (void *) nativeOpen},
     {"nativeGetSupportInfo","(JLjava/util/List;)I",                        (void *) nativeGetSupportInfo},
     {"nativeSetSupportInfo","(JLcom/hsj/camera/UsbCamera$SupportInfo;)I",  (void *) nativeSetSupportInfo},
     {"nativeFrameCallback", "(JILcom/hsj/camera/FrameCallback;)I",         (void *) nativeFrameCallback},

@@ -17,7 +17,11 @@ UsbMessenger::~UsbMessenger() {
 
 }
 
-int UsbMessenger::open(int vendorId, int productId, int fd) {
+int UsbMessenger::connect(int fd) {
+    return STATUS_SUCCESS;
+}
+
+int UsbMessenger::open(int vendorId, int productId, int bus_num, int dev_num) {
     return STATUS_SUCCESS;
 }
 

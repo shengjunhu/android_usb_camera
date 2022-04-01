@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,7 +40,8 @@ public final class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_CODE = 0x0A;
     private static final String[] PERMISSIONS = {Manifest.permission.CAMERA};
-    private final String ACTION_USB = "com.hsj.camera.PERMISSION_USB." + hashCode();
+    private final String ACTION_USB = "com.hsj.camera.sample.USB_PERMISSION." + hashCode();
+    private static final boolean IS_ROOT_DEVICE = false;
 
     private UsbCamera camera;
     private UsbReceiver usbReceiver;
@@ -119,8 +122,8 @@ public final class MainActivity extends AppCompatActivity {
 
     private int index_device;
     private int index_support;
-    private int index_mirror;
     private int index_orientation;
+    private int index_mirror;
 
     private void showDeviceDialog() {
         final UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
@@ -188,7 +191,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void checkDevice(UsbManager usbManager, UsbDevice device) {
         if (usbManager.hasPermission(device)) {
-            open(device);
+            open(usbManager, device);
         } else {
             Intent intent = new Intent(ACTION_USB);
             PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
@@ -202,7 +205,7 @@ public final class MainActivity extends AppCompatActivity {
             if (ACTION_USB.equals(intent.getAction())) {
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (device != null && intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                    open(device);
+                    open((UsbManager) getSystemService(Context.USB_SERVICE), device);
                 } else {
                     showToast("Usb Permission had been denied.");
                 }
@@ -214,10 +217,23 @@ public final class MainActivity extends AppCompatActivity {
 
     private List<UsbCamera.SupportInfo> supportInfos = new ArrayList<>();
     private UsbCamera.SupportInfo supportInfo;
+    private UsbDeviceConnection udc;
 
-    private void open(UsbDevice device) {
+    private void open(UsbManager usbManager, UsbDevice device) {
         close();
-        int status = camera.open(device.getVendorId(), device.getProductId(),0);
+        int status;
+        if (IS_ROOT_DEVICE) {
+            status = camera.open(device.getVendorId(), device.getProductId(), device.getDeviceName());
+        } else {
+            UsbDeviceConnection connection = usbManager.openDevice(device);
+            if (connection != null) {
+                this.udc = connection;
+                status = camera.open(connection.getFileDescriptor());
+            } else {
+                status = UsbCamera.STATUS_ERROR;
+                showToast("openDevice failed.");
+            }
+        }
         if (UsbCamera.STATUS_OK == status) {
             supportInfos.clear();
             status = camera.getSupportInfo(supportInfos);
@@ -244,6 +260,10 @@ public final class MainActivity extends AppCompatActivity {
         if (this.camera != null) {
             this.camera.stop();
             this.camera.close();
+        }
+        if (this.udc != null) {
+            this.udc.close();
+            this.udc = null;
         }
     }
 

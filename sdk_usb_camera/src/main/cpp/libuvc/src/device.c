@@ -126,8 +126,8 @@ int uvc_already_open(uvc_context_t *ctx, struct libusb_device *usb_dev) {
  * @return Error finding device or UVC_SUCCESS
  */
 uvc_error_t uvc_find_device(
-    uvc_context_t *ctx, uvc_device_t **dev,
-    int vid, int pid, const char *sn) {
+        uvc_context_t *ctx, uvc_device_t **dev,
+        int vid, int pid, const char *sn) {
   uvc_error_t ret = UVC_SUCCESS;
 
   uvc_device_t **list;
@@ -174,6 +174,101 @@ uvc_error_t uvc_find_device(
     UVC_EXIT(UVC_ERROR_NO_DEVICE);
     return UVC_ERROR_NO_DEVICE;
   }
+}
+
+/**
+ * Add by Hsj
+ * @brief Finds a camera identified by vendor, product, bus_num and dev_num
+ * @ingroup device
+ *
+ * @param[in] ctx UVC context in which to search for the camera
+ * @param[out] dev Reference to the camera, or NULL if not found
+ * @param[in] vid Vendor ID number, optional
+ * @param[in] pid Product ID number, optional
+ * @param[in] bus_num(/dev/bus/usb/bus_num/dev_num) or 0
+ * @param[in] dev_num(/dev/bus/usb/bus_num/dev_num) or 0
+ * @return Error finding device or UVC_SUCCESS
+ */
+uvc_error_t uvc_find_device2(
+    uvc_context_t *ctx, uvc_device_t **dev,
+    int vid, int pid, int bus_num, int dev_num) {
+  uvc_error_t ret = UVC_SUCCESS;
+
+  uvc_device_t **list;
+  uvc_device_t *test_dev;
+  int dev_idx;
+  int found_dev;
+
+  UVC_ENTER();
+
+  ret = uvc_get_device_list(ctx, &list);
+
+  if (ret != UVC_SUCCESS) {
+    UVC_EXIT(ret);
+    return ret;
+  }
+
+  dev_idx = 0;
+  found_dev = 0;
+
+  while (!found_dev && (test_dev = list[dev_idx++]) != NULL) {
+    uvc_device_descriptor_t *desc;
+
+    if (uvc_get_device_descriptor(test_dev, &desc) != UVC_SUCCESS)
+      continue;
+
+    if ((!vid || desc->idVendor == vid) && (!pid || desc->idProduct == pid)){
+      if ((bus_num == 0 && dev_num == 0) ||
+        (bus_num == libusb_get_bus_number(test_dev->usb_dev) &&
+        dev_num == libusb_get_device_address(test_dev->usb_dev))){
+        found_dev = 1;
+      }
+    }
+
+    uvc_free_device_descriptor(desc);
+  }
+
+  if (found_dev)
+    uvc_ref_device(test_dev);
+
+  uvc_free_device_list(list, 1);
+
+  if (found_dev) {
+    *dev = test_dev;
+    UVC_EXIT(UVC_SUCCESS);
+    return UVC_SUCCESS;
+  } else {
+    UVC_EXIT(UVC_ERROR_NO_DEVICE);
+    return UVC_ERROR_NO_DEVICE;
+  }
+}
+
+static uvc_error_t uvc_open_internal(uvc_device_t *dev, struct libusb_device_handle *usb_devh, uvc_device_handle_t **devh);
+
+/**
+ * Add by Hsj
+ * @brief Finds a camera identified by file descriptor
+ * @ingroup device
+ *
+ * @param[in] ctx UVC context in which to search for the camera
+ * @param[out] dev Reference to the camera, or NULL if not found
+ * @param[out] devh Handle on opened device
+ * @param[in] file descriptor
+ * @return Error finding device or UVC_SUCCESS
+ */
+uvc_error_t uvc_find_device_opened(
+        uvc_context_t *ctx, uvc_device_t *dev,
+        uvc_device_handle_t **devh, int fd) {
+    uvc_error_t ret = UVC_SUCCESS;
+    struct libusb_device_handle *dev_h;
+    ret = libusb_wrap_sys_device(ctx->usb_ctx, (intptr_t)fd, &dev_h);
+    if (ret == UVC_SUCCESS) {
+        dev = calloc(1, sizeof(uvc_device_t));
+        dev->ctx = ctx;
+        dev->usb_dev = libusb_get_device(dev_h);
+        ret = uvc_open_internal(dev, dev_h, devh);
+    }
+  return ret;
 }
 
 /** @brief Finds all cameras identified by vendor, product and/or serial number
@@ -262,8 +357,6 @@ uint8_t uvc_get_bus_number(uvc_device_t *dev) {
 uint8_t uvc_get_device_address(uvc_device_t *dev) {
   return libusb_get_device_address(dev->usb_dev);
 }
-
-static uvc_error_t uvc_open_internal(uvc_device_t *dev, struct libusb_device_handle *usb_devh, uvc_device_handle_t **devh);
 
 #if LIBUSB_API_VERSION >= 0x01000107
 /** @brief Wrap a platform-specific system device handle and obtain a UVC device handle.
@@ -952,15 +1045,15 @@ void uvc_ref_device(uvc_device_t *dev) {
  * @param dev Device to unreference
  */
 void uvc_unref_device(uvc_device_t *dev) {
-  UVC_ENTER();
+    UVC_ENTER();
 
-  libusb_unref_device(dev->usb_dev);
-  dev->ref--;
+    libusb_unref_device(dev->usb_dev);
+    dev->ref--;
 
-  if (dev->ref == 0)
-    free(dev);
+    if (dev->ref == 0)
+        free(dev);
 
-  UVC_EXIT_VOID();
+    UVC_EXIT_VOID();
 }
 
 /** @internal

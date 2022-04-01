@@ -10,14 +10,8 @@
 extern "C" {
 #endif
 
-UsbCamera::UsbCamera() : status(STATUS_INIT_NONE) {
-    uvc_error_t uvc_ret = uvc_init(&uvc_context, NULL);
-    if (uvc_ret == UVC_SUCCESS) {
-        status = STATUS_INIT_OK;
-    } else {
-        status = STATUS_INIT_NONE;
-        LOGE("uvc_init() failed: %d", uvc_ret);
-    }
+UsbCamera::UsbCamera() : _fd(0), status(STATUS_INIT_NONE) {
+
 }
 
 UsbCamera::~UsbCamera() {
@@ -34,21 +28,64 @@ void frameBack(uvc_frame_t *frame, void *ptr) {
 
 //==================================================================================================
 
-int UsbCamera::open(int vendorId, int productId, int fd) {
+int UsbCamera::connect(int fd) {
     int ret = STATUS_SUCCESS;
-    if (getStatus() == STATUS_INIT_OK) {
-        uvc_error_t uvc_ret = uvc_find_device(uvc_context, &uvc_device, vendorId, productId, NULL);
+    uvc_error_t uvc_ret;
+    //1. init uvc
+    if (getStatus() == STATUS_INIT_NONE) {
+        uvc_ret = uvc_init_fd(&uvc_context, nullptr);
+        LOGD("uvc_init(): %d", uvc_ret);
         if (uvc_ret == UVC_SUCCESS) {
+            status = STATUS_INIT_OK;
+        } else {
+            LOGE("uvc_init() failed: %d", uvc_ret);
+        }
+    }
+    //2. connect device
+    if (getStatus() == STATUS_INIT_OK) {
+        fd = dup(fd);
+        uvc_ret = uvc_find_device_opened(uvc_context, uvc_device, &uvc_device_handle, fd);
+        if (uvc_ret == UVC_SUCCESS) {
+            _fd = fd;
+            status = STATUS_OPEN;
+        } else {
+            ::close(fd);
+            LOGE("connect: %d", uvc_ret);
+        }
+    } else {
+        ret = STATUS_ERROR_STEP;
+        LOGE("connect: status=%d", getStatus());
+    }
+    return ret;
+}
+
+int UsbCamera::open(int vendorId, int productId, int bus_num, int dev_num) {
+    int ret = STATUS_SUCCESS;
+    uvc_error_t uvc_ret;
+    //1. init uvc
+    if (getStatus() == STATUS_INIT_NONE) {
+        uvc_ret = uvc_init(&uvc_context, nullptr);
+        if (uvc_ret == UVC_SUCCESS) {
+            status = STATUS_INIT_OK;
+        } else {
+            LOGE("uvc_init() failed: %d", uvc_ret);
+        }
+    }
+    //2. find device
+    if (getStatus() == STATUS_INIT_OK) {
+        uvc_ret = uvc_find_device2(uvc_context, &uvc_device, vendorId, productId, bus_num, dev_num);
+        if (uvc_ret == UVC_SUCCESS) {
+            //3. open device
             uvc_ret = uvc_open(uvc_device, &uvc_device_handle);
             if (uvc_ret == UVC_SUCCESS) {
                 status = STATUS_OPEN;
             } else {
+                LOGE("uvc_open: %d", uvc_ret);
                 ret = STATUS_EXE_FAILED;
-                LOGE("uvc_open() failed: %d", uvc_ret);
             }
         } else {
-            ret = STATUS_EXE_FAILED;
             LOGE("uvc_find_device() failed: %d", uvc_ret);
+            ret = STATUS_EXE_FAILED;
         }
     } else {
         ret = STATUS_ERROR_STEP;
@@ -162,10 +199,14 @@ int UsbCamera::close() {
     int st = getStatus();
     if (st == STATUS_OPEN || st == STATUS_CONFIGURE){
         uvc_close(uvc_device_handle);
-        uvc_unref_device(uvc_device);
+        if (_fd > 0) {
+            ::close(_fd);
+            _fd = 0;
+        } else {
+            uvc_unref_device(uvc_device);
+        }
         status = STATUS_INIT_OK;
     } else {
-        ret = STATUS_ERROR_STEP;
         LOGW("close: status=%d", getStatus());
     }
     return ret;
