@@ -3,8 +3,8 @@
 //
 
 #include "Common.h"
-#include "UsbCamera.h"
-#include "UsbMessenger.h"
+#include "libcamera/UsbCamera.h"
+#include "libcamera/UsbMessenger.h"
 
 #define OBJECT_ID "nativeObj"
 #define USB_CAMERA  "com/hsj/camera/UsbCamera"
@@ -112,7 +112,7 @@ static jint nativeConnect(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jint fd
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     jint ret = STATUS_NONE_INIT;
     if (camera) {
-        ret = camera->connect(fd);
+        ret = camera->connectDevice(fd);
     } else {
         LOGE("open: UsbCamera had been release.");
     }
@@ -123,7 +123,7 @@ static jint nativeOpen(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jint vid, 
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     jint ret = STATUS_NONE_INIT;
     if (camera) {
-        ret = camera->open(vid, pid, bus, dev);
+        ret = camera->openDevice(vid, pid, bus, dev);
     } else {
         LOGE("open: UsbCamera had been release.");
     }
@@ -166,49 +166,49 @@ static jint nativeGetSupportInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, 
     return ret;
 }
 
-static jint nativeSetSupportInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jobject supportInfo) {
+static jint nativeSetConfigInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jobject supportInfo) {
     jint ret = STATUS_NONE_INIT;
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     if (camera) {
         if (supportInfo){
             jclass cls = env->GetObjectClass(supportInfo);
-            jfieldID fId  = env->GetFieldID(cls, "format","I");
+            jfieldID fId1 = env->GetFieldID(cls, "format","I");
             jfieldID fId2 = env->GetFieldID(cls, "width", "I");
             jfieldID fId3 = env->GetFieldID(cls, "height","I");
             jfieldID fId4 = env->GetFieldID(cls, "fps",   "I");
-            if(fId && fId2 && fId3 && fId4) {
-                SupportInfo info(env->GetIntField(supportInfo, fId),
-                                 env->GetIntField(supportInfo, fId2),
-                                 env->GetIntField(supportInfo, fId3),
-                                 env->GetIntField(supportInfo, fId4));
-                ret = camera->setSupportInfo(info);
+            SupportInfo info(env->GetIntField(supportInfo, fId1),
+                             env->GetIntField(supportInfo, fId2),
+                             env->GetIntField(supportInfo, fId3),
+                             env->GetIntField(supportInfo, fId4));
+            ret = camera->setConfigInfo(info);
+            if(STATUS_SUCCESS == ret){
+                jfieldID fId5 = env->GetFieldID(cls, "pixel", "I");
+                jint pixel = env->GetIntField(supportInfo, fId5);
+                auto *process = new FrameProcess(info.width, info.height, info.format, pixel);
+                if(process->pixel_size != 0){
+                    jclass cls2 = env->GetObjectClass(thiz);
+                    //ByteBuffer
+                    jfieldID fId = env->GetFieldID(cls2, "frame", "Ljava/nio/ByteBuffer;");
+                    jobject buffer = env->NewDirectByteBuffer(process->buffer,process->pixel_size);
+                    env->SetObjectField(thiz, fId, buffer);
+                    //updateFrame
+                    jmethodID mid = env->GetMethodID(cls2, "updateFrame", "()V");
+                    jobject obj = env->NewGlobalRef(thiz);
+                    //setCallback
+                    process->setJavaObj(getJVM(), obj, mid);
+                } else {
+                    LOGW("setConfigInfo: pixel:%d, frame not be send to java.", pixel);
+                }
+                camera->setFrameProcess(process);
             } else {
-                ret = STATUS_ERROR_NONE;
-                LOGE("setSupportInfo: com.hsj.camera.UsbCamera$SupportInfo class had been changed.");
+                LOGE("setConfigInfo: failed:%d", ret);
             }
         } else {
             ret = STATUS_EMPTY_PARAM;
-            LOGE("setSupportInfo: supportInfo is null.");
+            LOGE("setConfigInfo: configInfo is null.");
         }
     } else {
-        LOGE("setSupportInfo: UsbCamera had been release.");
-    }
-    return ret;
-}
-
-static jint nativeFrameCallback(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jint format,jobject callback) {
-    auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
-    jint ret = STATUS_NONE_INIT;
-    if (camera) {
-        jobject obj = nullptr;
-        if (callback != nullptr) {
-            obj = env->NewGlobalRef(callback);
-        } else {
-            LOGW("setFrameCallback: callback is null.");
-        }
-        ret = camera->setFrameCallback(format, obj);
-    } else {
-        LOGE("setFrameCallback: UsbCamera had been release.");
+        LOGE("setConfigInfo: UsbCamera had been release.");
     }
     return ret;
 }
@@ -234,7 +234,7 @@ static jint nativeStart(JNIEnv *env, jobject thiz, CAMERA_ID cameraId) {
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     jint ret = STATUS_NONE_INIT;
     if (camera) {
-        ret = camera->start();
+        ret = camera->startStream();
     } else {
         LOGE("start: UsbCamera had been release.");
     }
@@ -245,7 +245,7 @@ static jint nativeStop(JNIEnv *env, jobject thiz, CAMERA_ID cameraId) {
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     jint ret = STATUS_NONE_INIT;
     if (camera) {
-        ret = camera->stop();
+        ret = camera->stopStream();
     } else {
         LOGE("stop: UsbCamera had been release.");
     }
@@ -256,7 +256,7 @@ static jint nativeClose(JNIEnv *env, jobject thiz, CAMERA_ID cameraId) {
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     jint ret = STATUS_SUCCESS;
     if (camera) {
-        ret = camera->close();
+        ret = camera->closeDevice();
     } else {
         LOGE("close: UsbCamera had been release.");
     }
@@ -279,8 +279,7 @@ static const JNINativeMethod USB_CAMERA_METHODS[] = {
     {"nativeConnect",       "(JI)I",                                       (void *) nativeConnect},
     {"nativeOpen",          "(JIIII)I",                                    (void *) nativeOpen},
     {"nativeGetSupportInfo","(JLjava/util/List;)I",                        (void *) nativeGetSupportInfo},
-    {"nativeSetSupportInfo","(JLcom/hsj/camera/UsbCamera$SupportInfo;)I",  (void *) nativeSetSupportInfo},
-    {"nativeFrameCallback", "(JILcom/hsj/camera/FrameCallback;)I",         (void *) nativeFrameCallback},
+    {"nativeSetConfigInfo", "(JLcom/hsj/camera/UsbCamera$SupportInfo;)I",  (void *) nativeSetConfigInfo},
     {"nativePreview",       "(JLandroid/view/Surface;)I",                  (void *) nativePreview},
     {"nativeStart",         "(J)I",                                        (void *) nativeStart},
     {"nativeStop",          "(J)I",                                        (void *) nativeStop},
@@ -292,7 +291,7 @@ static const JNINativeMethod USB_CAMERA_METHODS[] = {
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env;
-    jint ret = vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
+    jint ret = vm->GetEnv((void**)&env, JNI_VERSION_1_6);
     if (JNI_OK == ret) {
         //UsbMessenger
         if (JNI_OK == ret) {

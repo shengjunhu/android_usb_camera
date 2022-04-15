@@ -17,7 +17,7 @@ android {
                 cppFlags "-Wunused -frtti -fexceptions -mfpu=neon -fPIE"
                 arguments "-DANDROID_ARM_NEON=ON",
                           "-DANDROID_ARM_MODE=arm",
-                          "-DCMAKE_BUILD_TYPE=DEBUG",
+                          "-DCMAKE_BUILD_TYPE=Release",
                           "-DANDROID_PLATFORM=android-21"
             }
         }

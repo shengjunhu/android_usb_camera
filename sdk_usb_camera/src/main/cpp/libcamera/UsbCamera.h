@@ -2,24 +2,17 @@
 // Created by Hsj on 2022/1/14.
 //
 
-#include <jni.h>
-#include <vector>
-#include <android/native_window_jni.h>
-#include "libuvc/libuvc.h"
-
 #ifndef ANDROID_USB_CAMERA_USBCAMERA_H
 #define ANDROID_USB_CAMERA_USBCAMERA_H
 
-typedef enum {
-    FRAME_FORMAT_YUYV       = 0x04, //YUYV.
-    FRAME_FORMAT_MJPEG      = 0x06, //MJPEG.
-    FRAME_FORMAT_H264       = 0x10, //H264.
-} FrameFormat;
+#include <jni.h>
+#include <vector>
+#include "libuvc/libuvc.h"
+#include "FrameProcess.h"
 
-typedef enum {
-    PIXEL_FORMAT_RAW        = 0x04, //YUYV.
-    PIXEL_FORMAT_YUV420_888 = 0x0A, //NV12.
-} PixelFormat;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     STATUS_INIT_NONE        = 0x00, //No Init.
@@ -34,41 +27,43 @@ struct SupportInfo {
     int width;
     int height;
     int fps;
+    int pixel;
+    int rotate;
+    bool mirror;
 
-    SupportInfo(int format, int width, int height, int fps){
+    SupportInfo(int format, int width, int height, int fps) {
         this->format = (uvc_vs_desc_subtype)format;
         this->width = width;
         this->height = height;
         this->fps = fps;
     }
-};
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+};
 
 class UsbCamera {
 private:
-    int _fd;
+    //usb+uvc
     uvc_stream_ctrl_t ctrl;
     uvc_device_t *uvc_device;
     uvc_context_t *uvc_context;
     uvc_device_handle_t *uvc_device_handle;
-
+    //local
+    int fd;
+    FrameProcess *process;
     volatile StatusInfo status;
     inline const StatusInfo getStatus() const;
 public:
     UsbCamera();
     ~UsbCamera();
-    int connect(int fd);
-    int open(int vendorId, int productId, int bus_num, int dev_num);
-    int getSupportInfo(std::vector<SupportInfo> &supportInfos);
-    int setSupportInfo(SupportInfo &supportInfo);
-    int setFrameCallback(int pixelFormat,jobject callback);
+    int connectDevice(int fd);
+    int openDevice(int vendorId, int productId, int bus_num, int dev_num);
+    int getSupportInfo(std::vector<SupportInfo> &supportInfo);
+    int setConfigInfo(SupportInfo &configInfo);
+    int setFrameProcess(FrameProcess *process);
     int setPreview(ANativeWindow* window);
-    int start();
-    int stop();
-    int close();
+    int startStream();
+    int stopStream();
+    int closeDevice();
     void destroy();
 };
 

@@ -27,28 +27,30 @@ set(MODULE_CORE  core)
 set(MODULE_MAIN  camera)
 set(MODULE_TURBO turbojpeg-static)
 
+# module turbo
+add_subdirectory(libjpeg-turbo)
+# module yuv
+add_subdirectory(libyuv)
 # module usb
 add_subdirectory(libusb)
 # module uvc
 add_subdirectory(libuvc)
-# module yuv
-add_subdirectory(libyuv)
-# module turbo
-add_subdirectory(libjpeg-turbo)
 # module core
 add_subdirectory(libcamera)
 
+# link directories
 link_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/libusb/libusb
+        ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo
         ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
         ${CMAKE_CURRENT_SOURCE_DIR}/libcamera)
 
-# moudle main
+# include directories
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/Common.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/libusb/libusb
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo
         ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
         ${CMAKE_CURRENT_SOURCE_DIR}/libcamera)
+
 add_library(${MODULE_MAIN} SHARED Common.cpp OnLoad.cpp)
 
 # find system support library
@@ -58,5 +60,4 @@ find_library(log-lib log)
 target_link_libraries(
         ${MODULE_MAIN}
         ${log-lib}
-        android
         ${MODULE_CORE})

@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,14 +17,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
+import com.hsj.camera.IFrameCallback;
 import com.hsj.camera.UsbCamera;
-
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,9 +37,9 @@ public final class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_CODE = 0x0A;
+    private static final boolean IS_ROOT_DEVICE = false;
     private static final String[] PERMISSIONS = {Manifest.permission.CAMERA};
     private final String ACTION_USB = "com.hsj.camera.sample.USB_PERMISSION." + hashCode();
-    private static final boolean IS_ROOT_DEVICE = false;
 
     private UsbCamera camera;
     private UsbReceiver usbReceiver;
@@ -68,7 +66,8 @@ public final class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        close();
+        stopStream();
+        closeCamera();
     }
 
     @Override
@@ -76,8 +75,9 @@ public final class MainActivity extends AppCompatActivity {
         if (usbReceiver != null) {
             unregisterReceiver(usbReceiver);
         }
+        destroyCamera();
         super.onDestroy();
-        release();
+        System.exit(0);
     }
 
     @Override
@@ -90,15 +90,19 @@ public final class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()){
             case R.id.item_device:
+                stopStream();
                 showDeviceDialog();
                 break;
             case R.id.item_support:
+                stopStream();
                 showDeviceSupportDialog();
                 break;
             case R.id.item_mirror:
+                stopStream();
                 showPreviewMirrorDialog();
                 break;
             case R.id.item_orientation:
+                stopStream();
                 showPreviewOrientationDialog();
                 break;
             default:break;
@@ -138,7 +142,11 @@ public final class MainActivity extends AppCompatActivity {
             AlertDialog.Builder ad = new AlertDialog.Builder(this);
             ad.setTitle(R.string.txt_select_device);
             ad.setSingleChoiceItems(items, index_device, (dialog, which) -> index_device = which);
-            ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> checkDevice(usbManager, devices[index_device]));
+            ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {
+                closeCamera();
+                checkDevice(usbManager, devices[index_device]);
+            });
+            ad.setOnCancelListener(dialog -> startStream());
             ad.show();
         } else {
             showToast("No Usb device to be found.");
@@ -146,17 +154,21 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showDeviceSupportDialog() {
-        int size = supportInfos.size();
+        int size = supportInfo.size();
         if (size > 0) {
             String[] items = new String[size];
             for (int i = 0; i < size; ++i) {
-                items[i] = supportInfos.get(i).getInfo();
+                items[i] = supportInfo.get(i).getInfo();
             }
             if (index_support >= size) index_support = 0;
             AlertDialog.Builder ad = new AlertDialog.Builder(this);
             ad.setTitle(R.string.txt_select_support);
             ad.setSingleChoiceItems(items, index_support, (dialog, which) -> index_support = which);
-            ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {});
+            ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {
+                if (supportInfo.size() > index_support) configInfo = supportInfo.get(index_support);
+                startStream();
+            });
+            ad.setOnCancelListener(dialog -> startStream());
             ad.show();
         } else {
             showToast("Please select target device at first.");
@@ -169,7 +181,11 @@ public final class MainActivity extends AppCompatActivity {
         AlertDialog.Builder ad = new AlertDialog.Builder(this);
         ad.setTitle(R.string.txt_select_mirror);
         ad.setSingleChoiceItems(items, index_mirror, (dialog, which) -> index_mirror = which);
-        ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {});
+        ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {
+            if (configInfo != null) configInfo.setMirror(index_mirror);
+            startStream();
+        });
+        ad.setOnCancelListener(dialog -> startStream());
         ad.show();
     }
 
@@ -179,7 +195,18 @@ public final class MainActivity extends AppCompatActivity {
         AlertDialog.Builder ad = new AlertDialog.Builder(this);
         ad.setTitle(R.string.txt_select_orientation);
         ad.setSingleChoiceItems(items, index_orientation, (dialog, which) -> index_orientation = which);
-        ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {});
+        ad.setPositiveButton(R.string.txt_confirm, (dialog, which) -> {
+            if (configInfo != null) {
+                switch (index_orientation){
+                    case 1:configInfo.setRotate(UsbCamera.ROTATE.ROTATE_90);break;
+                    case 2:configInfo.setRotate(UsbCamera.ROTATE.ROTATE_180);break;
+                    case 3:configInfo.setRotate(UsbCamera.ROTATE.ROTATE_270);break;
+                    default:configInfo.setRotate(UsbCamera.ROTATE.ROTATE_0);break;
+                }
+            }
+            startStream();
+        });
+        ad.setOnCancelListener(dialog -> startStream());
         ad.show();
     }
 
@@ -191,7 +218,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void checkDevice(UsbManager usbManager, UsbDevice device) {
         if (usbManager.hasPermission(device)) {
-            open(usbManager, device);
+            openCamera(usbManager, device);
         } else {
             Intent intent = new Intent(ACTION_USB);
             PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
@@ -205,7 +232,7 @@ public final class MainActivity extends AppCompatActivity {
             if (ACTION_USB.equals(intent.getAction())) {
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (device != null && intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                    open((UsbManager) getSystemService(Context.USB_SERVICE), device);
+                    openCamera((UsbManager) getSystemService(Context.USB_SERVICE), device);
                 } else {
                     showToast("Usb Permission had been denied.");
                 }
@@ -215,12 +242,11 @@ public final class MainActivity extends AppCompatActivity {
 
 //===========================================Camera=================================================
 
-    private List<UsbCamera.SupportInfo> supportInfos = new ArrayList<>();
-    private UsbCamera.SupportInfo supportInfo;
+    private List<UsbCamera.SupportInfo> supportInfo = new ArrayList<>();
+    private UsbCamera.SupportInfo configInfo;
     private UsbDeviceConnection udc;
 
-    private void open(UsbManager usbManager, UsbDevice device) {
-        close();
+    private void openCamera(UsbManager usbManager, UsbDevice device) {
         int status;
         if (IS_ROOT_DEVICE) {
             status = camera.open(device.getVendorId(), device.getProductId(), device.getDeviceName());
@@ -235,30 +261,47 @@ public final class MainActivity extends AppCompatActivity {
             }
         }
         if (UsbCamera.STATUS_OK == status) {
-            supportInfos.clear();
-            status = camera.getSupportInfo(supportInfos);
-            if (UsbCamera.STATUS_OK != status || supportInfos.isEmpty()) {
+            supportInfo.clear();
+            status = camera.getSupportInfo(supportInfo);
+            if (UsbCamera.STATUS_OK == status && !supportInfo.isEmpty()) {
+                startStream();
+            }else {
                 showToast("getSupportInfo failed: " + status);
-            } else {
-                if (supportInfo == null) supportInfo = supportInfos.get(0);
-                status = camera.setSupportInfo(supportInfo);
-                if (UsbCamera.STATUS_OK == status) {
-                    status = camera.start();
-                    if (UsbCamera.STATUS_OK != status){
-                        showToast("start failed: " + status);
-                    }
-                } else {
-                    showToast("setSupportInfo failed: " + status);
-                }
             }
         } else {
             showToast("open failed: " + status);
         }
     }
 
-    private void close() {
+    private void startStream() {
+        if (!supportInfo.isEmpty()){
+            if (configInfo == null) configInfo = supportInfo.get(0);
+            configInfo.setFormatCallback(UsbCamera.PIXEL_FORMAT.PIXEL_FORMAT_YUY2);
+            int status = camera.setConfigInfo(configInfo);
+            if (UsbCamera.STATUS_OK == status) {
+                camera.setFrameCallback(frameCallback);
+                status = camera.start();
+                if (UsbCamera.STATUS_OK != status) {
+                    showToast("start failed: " + status);
+                }
+            } else {
+                showToast("setSupportInfo failed: " + status);
+            }
+        }else {
+            Log.w(TAG,"No camera had been opened.");
+        }
+    }
+
+    private void stopStream() {
         if (this.camera != null) {
             this.camera.stop();
+        }
+    }
+
+    private void closeCamera() {
+        this.configInfo = null;
+        this.supportInfo.clear();
+        if (this.camera != null) {
             this.camera.close();
         }
         if (this.udc != null) {
@@ -267,12 +310,19 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void release() {
+    private void destroyCamera() {
         if (this.camera != null) {
             this.camera.destroy();
             this.camera = null;
         }
     }
+
+    private final IFrameCallback frameCallback = new IFrameCallback() {
+        @Override
+        public void onFrame(ByteBuffer frame) {
+            Log.d(TAG, "onFrame");
+        }
+    };
 
 //==================================================================================================
 

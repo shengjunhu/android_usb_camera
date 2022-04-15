@@ -5,9 +5,9 @@ import java.nio.ByteBuffer;
 /**
  * @Author:Hsj
  * @Date:2022/1/13
- * @Class:UsbCallback
+ * @Class:IFrameCallback
  * @Desc:
  */
-public interface FrameCallback {
+public interface IFrameCallback {
     void onFrame(ByteBuffer frame);
 }

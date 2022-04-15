@@ -1,6 +1,7 @@
 package com.hsj.camera;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Surface;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -14,13 +15,6 @@ import java.util.List;
 public final class UsbCamera {
 
     private static final String TAG = "UsbCamera";
-    //Frame Format: These match the enums in cpp/libcamera/Camera.h
-    public static final int FRAME_FORMAT_YUYV        = 0x04;
-    public static final int FRAME_FORMAT_MJPEG       = 0x06;
-    public static final int FRAME_FORMAT_H264        = 0x08;
-    //Pixel Format: These match the enums in cpp/libcamera/Camera.h
-    public static final int PIXEL_FORMAT_RAW         = 0x04;
-    public static final int PIXEL_FORMAT_YUV420_888  = 0x0A;
     //Camera Status
     public static final int STATUS_OK        =  0;
     public static final int STATUS_ERROR     = -10;
@@ -30,17 +24,36 @@ public final class UsbCamera {
         System.loadLibrary("camera");
     }
 
-    public enum FLIP {
-        FLIP_H(1), FLIP_V(-1), FLIP_NONE(0);
+    public enum FRAME_FORMAT {
+        //Frame Format: These match the enums in cpp/libcamera/Camera.h
+        FRAME_FORMAT_YUY2(0x04),
+        FRAME_FORMAT_MJPG(0x06),
+        FRAME_FORMAT_H264(0x08);
 
-        private int flip;
+        private int format;
 
-        FLIP(int flip){
-            this.flip = flip;
+        FRAME_FORMAT(int format){
+            this.format = format;
         }
 
         public int getValue(){
-            return flip;
+            return format;
+        }
+    }
+
+    public enum PIXEL_FORMAT {
+        //Pixel Format: These match the enums in cpp/libcamera/Camera.h
+        PIXEL_FORMAT_YUY2(0x04),
+        PIXEL_FORMAT_YUV420(0x0A);
+
+        private int format;
+
+        PIXEL_FORMAT(int format){
+            this.format = format;
+        }
+
+        public int getValue(){
+            return format;
         }
     }
 
@@ -59,12 +72,13 @@ public final class UsbCamera {
     }
 
     public static class SupportInfo {
-        public int format;
-        public int width;
-        public int height;
-        public int fps;
-        public ROTATE rotate;
-        public FLIP flip;
+        private int format;
+        private int width;
+        private int height;
+        private int fps;
+        private int pixel;
+        private int rotate;
+        private int mirror;
 
         public SupportInfo(int format, int width, int height, int fps) {
             this.format = format;
@@ -73,18 +87,25 @@ public final class UsbCamera {
             this.fps    = fps;
         }
 
-        public void setTransfer(ROTATE rotate, FLIP flip){
-            this.rotate = rotate;
-            this.flip = flip;
+        public void setFormatCallback(PIXEL_FORMAT format){
+            this.pixel = format.getValue();
+        }
+
+        public void setRotate(ROTATE rotate){
+            this.rotate = rotate.getValue();
+        }
+
+        public void setMirror(int mirror){
+            this.mirror = mirror;
         }
 
         public String getInfo(){
             String info = "Unknown";
-            if (format == FRAME_FORMAT_MJPEG){
+            if (format == FRAME_FORMAT.FRAME_FORMAT_MJPG.getValue()){
                 info = "MJPEG ";
-            } else if (format == FRAME_FORMAT_YUYV){
+            } else if (format == FRAME_FORMAT.FRAME_FORMAT_YUY2.getValue()){
                 info = "YUYV ";
-            } else if (format == FRAME_FORMAT_H264){
+            } else if (format == FRAME_FORMAT.FRAME_FORMAT_H264.getValue()){
                 info = "H264 ";
             }
             info += width + " x " + height + " FPS: " + fps;
@@ -96,7 +117,6 @@ public final class UsbCamera {
 
     //C++ object id
     private final long nativeObj;
-    private ByteBuffer frame;
 
     public UsbCamera() {
         this.nativeObj = nativeInit();
@@ -137,10 +157,10 @@ public final class UsbCamera {
         return status;
     }
 
-    public final synchronized int getSupportInfo(List<SupportInfo> supportInfos) {
+    public final synchronized int getSupportInfo(List<SupportInfo> supportInfo) {
         int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            status = nativeGetSupportInfo(this.nativeObj, supportInfos);
+            status = nativeGetSupportInfo(this.nativeObj, supportInfo);
             Logger.d(TAG, "getSupportInfo: " + status);
         } else {
             Logger.e(TAG, "getSupportInfo: already destroyed");
@@ -148,24 +168,21 @@ public final class UsbCamera {
         return status;
     }
 
-    public final synchronized int setSupportInfo(SupportInfo supportInfo) {
+    public final synchronized void setFrameCallback(IFrameCallback callback) {
+        if (this.nativeObj != 0) {
+            this.callback = callback;
+        } else {
+            Logger.e(TAG, "setFrameCallback: already destroyed");
+        }
+    }
+
+    public final synchronized int setConfigInfo(SupportInfo configInfo) {
         int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            status = nativeSetSupportInfo(this.nativeObj, supportInfo);
+            status = nativeSetConfigInfo(this.nativeObj, configInfo);
             Logger.d(TAG, "setSupportInfo: " + status);
         } else {
             Logger.e(TAG, "setSupportInfo: already destroyed");
-        }
-        return status;
-    }
-
-    public final synchronized int setFrameCallback(int pixelFormat, FrameCallback callback) {
-        int status = STATUS_DESTROYED;
-        if (this.nativeObj != 0) {
-            status = nativeFrameCallback(this.nativeObj, pixelFormat, callback);
-            Logger.d(TAG, "setFrameCallback: " + status);
-        } else {
-            Logger.e(TAG, "setFrameCallback: already destroyed");
         }
         return status;
     }
@@ -220,6 +237,19 @@ public final class UsbCamera {
         }
     }
 
+//=======================================Native Call================================================
+
+    private ByteBuffer frame;
+    private IFrameCallback callback;
+
+    private void updateFrame() {
+        if (callback != null) {
+            callback.onFrame(frame);
+        } else {
+            Logger.w(TAG,"IFrameCallback is null");
+        }
+    }
+
 //=======================================Native API=================================================
 
     private native long nativeInit();
@@ -230,9 +260,7 @@ public final class UsbCamera {
 
     private native int nativeGetSupportInfo(long nativeObj, List<SupportInfo> supportInfo);
 
-    private native int nativeSetSupportInfo(long nativeObj, SupportInfo supportInfo);
-
-    private native int nativeFrameCallback(long nativeObj, int pixelFormat, FrameCallback callback);
+    private native int nativeSetConfigInfo(long nativeObj, SupportInfo configInfo);
 
     private native int nativePreview(long nativeObj, Surface surface);
 

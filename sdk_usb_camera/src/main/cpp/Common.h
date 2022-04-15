@@ -11,12 +11,13 @@
 #include <android/log.h>
 
 #define STATUS_NONE_INIT     -9
-#define STATUS_EMPTY_PARAM   -8
-#define STATUS_EMPTY_DATA    -7
-#define STATUS_ERROR_NONE    -6
-#define STATUS_ERROR_STEP    -5
-#define STATUS_EMPTY_OBJ     -4
-#define STATUS_EXE_FAILED    -3
+#define STATUS_ALREADY_INIT  -8
+#define STATUS_EMPTY_PARAM   -7
+#define STATUS_ERROR_PARAM   -6
+#define STATUS_EMPTY_DATA    -5
+#define STATUS_ERROR_STEP    -4
+#define STATUS_EMPTY_OBJ     -3
+#define STATUS_EXE_FAILED    -2
 #define STATUS_SUCCESS        0
 
 #ifdef __cplusplus

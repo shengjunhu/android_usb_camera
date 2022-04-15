@@ -12,28 +12,25 @@ extern "C" {
 
 static JavaVM *jvm;
 
-JNIEnv *getEnv() {
-    JNIEnv *env = nullptr;
-    if (jvm) {
-        jint ret = jvm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
-        if (JNI_OK == ret) {
-            LOGD("getEnv succeed");
-        } else {
-            LOGE("getEnv failed: %d", ret);
-        }
-    } else {
-        LOGE("getEnv failed: jvm is null");
-    }
-    return env;
+void setJVM(JavaVM *vm) {
+    jvm = vm;
 }
 
 JavaVM *getJVM() {
     return jvm;
 }
 
-void setJVM(JavaVM *vm) {
-    if (jvm) SAFE_DELETE(jvm);
-    jvm = vm;
+JNIEnv *getEnv() {
+    JNIEnv *env = nullptr;
+    if (jvm) {
+        jint ret = jvm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
+        if (JNI_OK != ret) {
+            LOGE("getEnv failed: %d", ret);
+        }
+    } else {
+        LOGE("getEnv failed: jvm is null");
+    }
+    return env;
 }
 
 uint64_t timeMs() {
