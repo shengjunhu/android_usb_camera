@@ -276,7 +276,7 @@ public final class MainActivity extends AppCompatActivity {
     private void startStream() {
         if (!supportInfo.isEmpty()){
             if (configInfo == null) configInfo = supportInfo.get(0);
-            configInfo.setFormatCallback(UsbCamera.PIXEL_FORMAT.PIXEL_FORMAT_YUY2);
+            configInfo.setFormatCallback(UsbCamera.PIXEL_FORMAT.PIXEL_FORMAT_I420);
             int status = camera.setConfigInfo(configInfo);
             if (UsbCamera.STATUS_OK == status) {
                 camera.setFrameCallback(frameCallback);

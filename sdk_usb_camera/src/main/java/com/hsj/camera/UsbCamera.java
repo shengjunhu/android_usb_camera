@@ -1,7 +1,6 @@
 package com.hsj.camera;
 
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Surface;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -43,8 +42,8 @@ public final class UsbCamera {
 
     public enum PIXEL_FORMAT {
         //Pixel Format: These match the enums in cpp/libcamera/Camera.h
-        PIXEL_FORMAT_YUY2(0x04),
-        PIXEL_FORMAT_YUV420(0x0A);
+        PIXEL_FORMAT_DEPTH(0x05),
+        PIXEL_FORMAT_I420(0x0A);
 
         private int format;
 
@@ -87,8 +86,8 @@ public final class UsbCamera {
             this.fps    = fps;
         }
 
-        public void setFormatCallback(PIXEL_FORMAT format){
-            this.pixel = format.getValue();
+        public void setFormatCallback(PIXEL_FORMAT pixelFormat){
+            this.pixel = pixelFormat.getValue();
         }
 
         public void setRotate(ROTATE rotate){

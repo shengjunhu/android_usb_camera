@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 # option
-option(ENABLE_UVC_DEBUGGING "Enable UVC debugging" ON)
+option(ENABLE_UVC_DEBUGGING "Enable UVC debugging" OFF)
 if(ENABLE_UVC_DEBUGGING)
   add_definitions(-DUVC_DEBUGGING)
 endif()

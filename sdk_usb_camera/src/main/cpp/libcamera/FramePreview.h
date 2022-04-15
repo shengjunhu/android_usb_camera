@@ -8,47 +8,56 @@
 #include <android/native_window_jni.h>
 #include "FrameDecoder.h"
 
+typedef uint16_t DepthPixel;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef uint16_t DepthPixel;
-
 class IPreview {
-protected:
-    int width, height;
 public:
     virtual ~IPreview() = default;
     virtual int pause() = 0;
-    virtual int renderYUYV(uint8_t *data) = 0;
-    virtual int renderDEPTH(uint8_t *data) = 0;
-    virtual int renderYUV420(uint8_t *data) = 0;
+    virtual int renderI420(const uint8_t *data) = 0;
+    virtual int renderDepth(const uint8_t *data) = 0;
 };
 
-class FramePreview {
+class GLESPreview : public IPreview {
 private:
-    uint16_t width;
-    uint16_t height;
     size_t frame_size;
-
-    size_t index_u;
-    size_t index_v;
-
+    size_t u_length;
+    size_t v_length;
     int stride_u;
     int stride_v;
-    int stride_width;
-
+    int stride_depth;
     uint32_t *histogram;
     ANativeWindow *window;
     void calculateDepthHist(const DepthPixel *depth, const size_t size);
-
 public:
-    FramePreview(ANativeWindow *window, uint16_t width, uint16_t height, PixelFormat format);
-    ~FramePreview();
+    GLESPreview(uint16_t width, uint16_t height, PixelFormat format, ANativeWindow *window);
+    ~GLESPreview();
     int pause();
-    int renderYUY2(const uint8_t *src);
-    int renderDEPTH(const uint8_t *src);
-    int renderYUV420(const uint8_t *src);
+    int renderI420(const uint8_t *data);
+    int renderDepth(const uint8_t *data);
+};
+
+class NativePreview : public IPreview{
+private:
+    size_t frame_size;
+    size_t u_length;
+    size_t v_length;
+    int stride_u;
+    int stride_v;
+    int stride_depth;
+    uint32_t *histogram;
+    ANativeWindow *window;
+    void calculateDepthHist(const DepthPixel *depth, const size_t size);
+public:
+    NativePreview(uint16_t width, uint16_t height, PixelFormat format, ANativeWindow *window);
+    ~NativePreview();
+    int pause();
+    int renderI420(const uint8_t *data);
+    int renderDepth(const uint8_t *data);
 };
 
 #ifdef __cplusplus

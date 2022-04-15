@@ -20,12 +20,12 @@ if(${CMAKE_BUILD_TYPE} MATCHES debug OR
 endif ()
 
 # set global variable
+set(MODULE_TURBO turbojpeg-static)
 set(MODULE_YUV   yuv)
 set(MODULE_USB   usb)
 set(MODULE_UVC   uvc)
 set(MODULE_CORE  core)
 set(MODULE_MAIN  camera)
-set(MODULE_TURBO turbojpeg-static)
 
 # module turbo
 add_subdirectory(libjpeg-turbo)

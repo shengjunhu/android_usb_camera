@@ -31,15 +31,24 @@ set(DIR_SRC source/compare.cc
             source/scale_common.cc
             source/video_common.cc)
 
+option(LIBYUV_ENABLE_JPEG "option for libjpeg" OFF)
+if(LIBYUV_ENABLE_JPEG)
+  add_definitions(-DHAVE_JPEG)
+  #add_library(jpeg SHARED IMPORTED)
+  set(DIR_JPEG
+          source/convert_jpeg.cc
+          source/mjpeg_decoder.cc
+          source/mjpeg_validate.cc)
+  list(APPEND DIR_SRC ${DIR_JPEG})
+endif()
+
 if(${ANDROID_ABI} MATCHES "armeabi-v7a")
-  # add_definitions(-DHAVE_JPEG)
   add_definitions(-DLIBYUV_NEON)
   set(DIR_ABI source/compare_neon.cc
               source/rotate_neon.cc
               source/scale_neon.cc
               source/row_neon.cc)
 elseif(${ANDROID_ABI} MATCHES "arm64-v8a")
-  # add_definitions(-DHAVE_JPEG)
   add_definitions(-DLIBYUV_NEON)
   set(DIR_ABI source/compare_neon64.cc
               source/rotate_neon64.cc
@@ -52,7 +61,6 @@ else()
               source/row_gcc.cc)
 endif()
 
-# main
 list(APPEND DIR_SRC ${DIR_ABI})
 include_directories(include)
 add_library(${MODULE_YUV} STATIC ${DIR_SRC})

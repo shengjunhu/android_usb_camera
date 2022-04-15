@@ -6,6 +6,8 @@
 #include "UsbCamera.h"
 #include "libuvc/libuvc_internal.h"
 
+#define PREVIEW_ON_GL 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,18 +28,17 @@ static void frame_callback(uvc_frame_t *frame, void *args) {
     auto *process = reinterpret_cast<FrameProcess *>(args);
     //1. Decoder: function pointer
     if (0 == process->decodeFrame((uint8_t *)frame->data, frame->data_bytes, process->buffer)){
-        saveFile("/sdcard/frame2_1920x1080.YUV", process->buffer, process->pixel_size);
         //2. Render: function pointer
-        //process->renderFrame(process->buffer);
+        process->renderFrame(process->buffer);
         //3. Send to Java
-        /*JNIEnv *env;
+        JNIEnv *env;
         JavaVM *jvm = process->jvm;
         if (jvm != nullptr && JNI_OK == jvm->AttachCurrentThread(&env, nullptr)){
             env->CallVoidMethod(process->obj, process->mid);
             jvm->DetachCurrentThread();
         } else {
             LOGE("frameCallBack AttachCurrentThread failed.");
-        }*/
+        }
     }
 }
 
@@ -151,7 +152,8 @@ int UsbCamera::getSupportInfo(std::vector<SupportInfo> &supportInfo) {
 
 int UsbCamera::setConfigInfo(SupportInfo &configInfo) {
     int ret = STATUS_SUCCESS;
-    if (getStatus() == STATUS_OPEN) {
+    int _status = getStatus();
+    if (_status == STATUS_OPEN || _status == STATUS_CONFIGURE) {
         if (uvc_device_handle) {
             // Config info
             enum uvc_frame_format frame_format = UVC_FRAME_FORMAT_YUYV;
@@ -194,8 +196,8 @@ int UsbCamera::setFrameProcess(FrameProcess *_process) {
 int UsbCamera::setPreview(ANativeWindow *window) {
     int ret = STATUS_SUCCESS;
     if(getStatus() == STATUS_CONFIGURE) {
-        if (process != nullptr){
-
+        if (process != nullptr) {
+            process->setPreview(window);
         } else {
             ret = STATUS_ERROR_STEP;
         }

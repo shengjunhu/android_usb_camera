@@ -12,48 +12,48 @@ extern "C" {
 
 //==================================================================================================
 
-FrameProcess::FrameProcess(jint width, jint height, jint format, jint pixel):
-    jvm(nullptr), obj(nullptr), mid(nullptr), pixel_size(0),
-    decode(nullptr), render(nullptr), preview(nullptr) {
+FrameProcess::FrameProcess(jint width, jint height, jint format, jint _pixel):
+    width(width), height(height), jvm(nullptr), obj(nullptr), mid(nullptr),
+    pixel_size(0), decode(nullptr), render(nullptr), preview(nullptr) {
+    pixel = PixelFormat(_pixel);
     buffer_size = width * height * 2;
     buffer = (uint8_t *) malloc(buffer_size);
     if (format == FRAME_FORMAT_YUY2){
-        if (pixel == PIXEL_FORMAT_YUV420){
+        if (pixel == PIXEL_FORMAT_I420){
             pixel_size = buffer_size * 3 / 4 ;
-            decode = &FrameDecoder::YUY2ToYUV420;
-            decoder = new FrameDecoder(width, height);
+            decode = &FrameDecoder::YUY2ToI420;
         } else {
             pixel_size = buffer_size;
             decode = &FrameDecoder::YUY2ToCopy;
-            decoder = new FrameDecoder(width, height);
         }
+        decoder = new FrameDecoder(width, height);
     } else if (format == FRAME_FORMAT_MJPG){
-        if (pixel == PIXEL_FORMAT_YUV420){
-            pixel_size = buffer_size * 3 / 4 ;
-            decode = &FrameDecoder::MJPGToYUV420;
-            decoder = new FrameDecoder(width, height);
-        } else if (pixel == PIXEL_FORMAT_YUY2){
-            pixel_size = buffer_size;
-            decode = &FrameDecoder::MJPGToYUY2;
-            decoder = new FrameDecoder(width, height);
-        }
+        pixel_size = buffer_size * 3 / 4 ;
+        decode = &FrameDecoder::MJPGToI420;
+        decoder = new FrameDecoder(width, height);
     } else if (format == FRAME_FORMAT_H264){
-        if (pixel == PIXEL_FORMAT_YUV420){
-            pixel_size = buffer_size * 3 / 4 ;
-            decode = &FrameDecoder::H264ToYUV420;
-            decoder = new FrameDecoder(width, height);
-        } else if (pixel == PIXEL_FORMAT_YUY2){
-            pixel_size = buffer_size;
-            decode = &FrameDecoder::H264ToYUY2;
-            decoder = new FrameDecoder(width, height);
-        }
+        pixel_size = buffer_size * 3 / 4 ;
+        decode = &FrameDecoder::H264ToI420;
+        decoder = new FrameDecoder(width, height);
     } else {
         LOGE("Frame format error: %d", format);
     }
 }
 
 FrameProcess::~FrameProcess() {
-
+    decode = nullptr;
+    render = nullptr;
+    SAFE_FREE(buffer);
+    SAFE_DELETE(decoder);
+    SAFE_DELETE(preview);
+    if(jvm != nullptr && obj != nullptr){
+        JNIEnv *env;
+        if (JNI_OK == jvm->GetEnv((void**)&env, JNI_VERSION_1_6)){
+            env->DeleteGlobalRef(obj);
+        }
+        obj = nullptr;
+        mid = nullptr;
+    }
 }
 
 //==================================================================================================
@@ -67,18 +67,27 @@ int FrameProcess::renderFrame(uint8_t *src){
     }
 }
 
-int FrameProcess::setPreview(IPreview *_preview){
-    SAFE_DELETE(preview);
+int FrameProcess::setPreview(ANativeWindow *window){
     int ret = STATUS_SUCCESS;
-    this->preview = _preview;
-    if (pixel == PIXEL_FORMAT_YUV420){
-        render = &IPreview::renderYUV420;
-    } else if (pixel == PIXEL_FORMAT_YUY2){
-        render = &IPreview::renderYUYV;
+    SAFE_DELETE(preview);
+    if(window != nullptr){
+        LOGI("setPreview: window is nullptr");
+    } else if (pixel == PIXEL_FORMAT_I420){
+        render = &IPreview::renderI420;
+#ifdef ON_GL_PREVIEW
+        this->preview = new GLESPreview(width, height, pixel, window);
+#else
+        this->preview = new NativePreview(width, height, pixel, window);
+#endif
     } else if (pixel == PIXEL_FORMAT_DEPTH){
-        render = &IPreview::renderDEPTH;
+        render = &IPreview::renderDepth;
+#ifdef ON_GL_PREVIEW
+        this->preview = new GLESPreview(width, height, pixel, window);
+#else
+        this->preview = new NativePreview(width, height, pixel, window);
+#endif
     } else {
-        LOGE("Pixel format error: %d", pixel);
+        LOGE("PixelFormat error: %d", pixel);
         ret = STATUS_EXE_FAILED;
     }
     return ret;
@@ -97,7 +106,6 @@ int FrameProcess::setJavaObj(JavaVM* _jvm, jobject _obj, jmethodID _mid){
     if (this->jvm != nullptr) {
         JNIEnv *env;
         if (JNI_OK == this->jvm->GetEnv((void**)&env, JNI_VERSION_1_6)){
-            LOGI("JavaCallback: DeleteGlobalRef");
             env->DeleteGlobalRef(this->obj);
             this->obj = nullptr;
             this->mid = nullptr;
