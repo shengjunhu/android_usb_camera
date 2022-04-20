@@ -166,7 +166,7 @@ static jint nativeGetSupportInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, 
     return ret;
 }
 
-static jint nativeSetConfigInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jobject supportInfo) {
+static jint nativeSetSupportInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, jobject supportInfo) {
     jint ret = STATUS_NONE_INIT;
     auto *camera = reinterpret_cast<UsbCamera *>(cameraId);
     if (camera) {
@@ -180,12 +180,12 @@ static jint nativeSetConfigInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, j
                              env->GetIntField(supportInfo, fId2),
                              env->GetIntField(supportInfo, fId3),
                              env->GetIntField(supportInfo, fId4));
-            ret = camera->setConfigInfo(info);
+            ret = camera->setSupportInfo(info);
             if(STATUS_SUCCESS == ret){
                 jfieldID fId5 = env->GetFieldID(cls, "pixel", "I");
                 jint pixel = env->GetIntField(supportInfo, fId5);
                 auto *process = new FrameProcess(info.width, info.height, info.format, pixel);
-                if(process->pixel_size != 0){
+                if(pixel != 0 && process->pixel_size != 0){
                     jclass cls2 = env->GetObjectClass(thiz);
                     //ByteBuffer
                     jfieldID fId = env->GetFieldID(cls2, "frame", "Ljava/nio/ByteBuffer;");
@@ -208,7 +208,7 @@ static jint nativeSetConfigInfo(JNIEnv *env, jobject thiz, CAMERA_ID cameraId, j
             LOGE("setConfigInfo: configInfo is null.");
         }
     } else {
-        LOGE("setConfigInfo: UsbCamera had been release.");
+        LOGE("setSupportInfo: UsbCamera had been release.");
     }
     return ret;
 }
@@ -279,7 +279,7 @@ static const JNINativeMethod USB_CAMERA_METHODS[] = {
     {"nativeConnect",       "(JI)I",                                       (void *) nativeConnect},
     {"nativeOpen",          "(JIIII)I",                                    (void *) nativeOpen},
     {"nativeGetSupportInfo","(JLjava/util/List;)I",                        (void *) nativeGetSupportInfo},
-    {"nativeSetConfigInfo", "(JLcom/hsj/camera/UsbCamera$SupportInfo;)I",  (void *) nativeSetConfigInfo},
+    {"nativeSetSupportInfo","(JLcom/hsj/camera/UsbCamera$SupportInfo;)I",  (void *) nativeSetSupportInfo},
     {"nativePreview",       "(JLandroid/view/Surface;)I",                  (void *) nativePreview},
     {"nativeStart",         "(J)I",                                        (void *) nativeStart},
     {"nativeStop",          "(J)I",                                        (void *) nativeStop},

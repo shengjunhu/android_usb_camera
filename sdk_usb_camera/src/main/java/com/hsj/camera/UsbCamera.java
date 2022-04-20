@@ -4,6 +4,7 @@ import android.text.TextUtils;
 import android.view.Surface;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @Author:Hsj
@@ -42,8 +43,8 @@ public final class UsbCamera {
 
     public enum PIXEL_FORMAT {
         //Pixel Format: These match the enums in cpp/libcamera/Camera.h
-        PIXEL_FORMAT_DEPTH(0x05),
-        PIXEL_FORMAT_I420(0x0A);
+        PIXEL_FORMAT_I420(0x0A),
+        PIXEL_FORMAT_DEPTH(0x05);
 
         private int format;
 
@@ -98,7 +99,23 @@ public final class UsbCamera {
             this.mirror = mirror;
         }
 
-        public String getInfo(){
+        public int getFormat(){
+            return format;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public int getFps() {
+            return fps;
+        }
+
+        public String getFormatStr(){
             String info = "Unknown";
             if (format == FRAME_FORMAT.FRAME_FORMAT_MJPG.getValue()){
                 info = "MJPEG ";
@@ -107,9 +124,9 @@ public final class UsbCamera {
             } else if (format == FRAME_FORMAT.FRAME_FORMAT_H264.getValue()){
                 info = "H264 ";
             }
-            info += width + " x " + height + " FPS: " + fps;
             return info;
         }
+
     }
 
 //======================================Java API====================================================
@@ -175,10 +192,10 @@ public final class UsbCamera {
         }
     }
 
-    public final synchronized int setConfigInfo(SupportInfo configInfo) {
+    public final synchronized int setSupportInfo(SupportInfo supportInfo) {
         int status = STATUS_DESTROYED;
         if (this.nativeObj != 0) {
-            status = nativeSetConfigInfo(this.nativeObj, configInfo);
+            status = nativeSetSupportInfo(this.nativeObj, supportInfo);
             Logger.d(TAG, "setSupportInfo: " + status);
         } else {
             Logger.e(TAG, "setSupportInfo: already destroyed");
@@ -259,7 +276,7 @@ public final class UsbCamera {
 
     private native int nativeGetSupportInfo(long nativeObj, List<SupportInfo> supportInfo);
 
-    private native int nativeSetConfigInfo(long nativeObj, SupportInfo configInfo);
+    private native int nativeSetSupportInfo(long nativeObj, SupportInfo configInfo);
 
     private native int nativePreview(long nativeObj, Surface surface);
 

@@ -4,6 +4,8 @@ static def buildTime(){
 
 ext {
 
+    isDebug                             = true
+
     plugins = [
             library                     : 'com.android.library',
             application                 : 'com.android.application',
@@ -23,7 +25,7 @@ ext {
 
             //Test
             testInstrumentationRunner   : 'androidx.test.runner.AndroidJUnitRunner',
-            testJunit                   : 'junit:junit:4.13',
+            testJunit                   : 'junit:junit:4.13.2',
             testExt                     : 'androidx.test.ext:junit:1.1.2',
             testEspresso                : 'androidx.test.espresso:espresso-core:3.3.0',
 
@@ -32,10 +34,12 @@ ext {
             multidex                    : 'androidx.multidex:multidex:2.0.1',
             appcompat                   : 'androidx.appcompat:appcompat:1.2.0',
             annotations                 : 'androidx.annotation:annotation:1.1.0',
-            constraint_layout           : 'androidx.constraintlayout:constraintlayout:2.0.1',
+            drawerlayout                : 'androidx.drawerlayout:drawerlayout:1.1.1',
+            constraintlayout            : 'androidx.constraintlayout:constraintlayout:2.0.1',
+            material                    : 'com.google.android.material:material:1.2.0',
 
             //LeakCanary
-            leak_canary                  : 'com.squareup.leakcanary:leakcanary-android:2.4',
+            leakcanary                  : 'com.squareup.leakcanary:leakcanary-android:2.8.1',
     ]
 
 }

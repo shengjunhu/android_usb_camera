@@ -6,8 +6,6 @@
 #include "UsbCamera.h"
 #include "libuvc/libuvc_internal.h"
 
-#define PREVIEW_ON_GL 1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -150,7 +148,7 @@ int UsbCamera::getSupportInfo(std::vector<SupportInfo> &supportInfo) {
     return ret;
 }
 
-int UsbCamera::setConfigInfo(SupportInfo &configInfo) {
+int UsbCamera::setSupportInfo(SupportInfo &configInfo) {
     int ret = STATUS_SUCCESS;
     int _status = getStatus();
     if (_status == STATUS_OPEN || _status == STATUS_CONFIGURE) {

@@ -1,18 +1,22 @@
 <resources>
     <string name="app_name">UsbCamera</string>
-    <string name="txt_create">create</string>
-    <string name="txt_destroy">destroy</string>
-    <string name="txt_open">open</string>
-    <string name="txt_close">close</string>
-    <string name="txt_start">start</string>
-    <string name="txt_stop">stop</string>
-    <string name="txt_item_device">Device</string>
-    <string name="txt_item_support">Support</string>
-    <string name="txt_item_mirror">Mirror</string>
-    <string name="txt_item_orientation">Orientation</string>
+    <string name="txt_item_config">Config</string>
+    <string name="txt_author_email">shengjunhu@foxmail.com</string>
+    <string name="txt_usb_camera">Usb Camera</string>
+    <string name="txt_support_format">Support Format</string>
+    <string name="txt_support_size">Support Size</string>
+    <string name="txt_frame_decoder">Frame Decoder</string>
+    <string name="txt_frame_render">Frame Render</string>
+    <string name="txt_display_mirror">Display Mirror</string>
+    <string name="txt_display_orientation">Display Orientation</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="txt_confirm">Confirm</string>
-    <string name="txt_select_device">Select Device</string>
-    <string name="txt_select_support">Select Support Size</string>
-    <string name="txt_select_mirror">Select Preview Mirror</string>
-    <string name="txt_select_orientation">Select Preview Orientation</string>
+    <string name="txt_select_camera">Select Camera</string>
+    <string name="txt_config_format">Config Support Format</string>
+    <string name="txt_config_size">Config Support Size</string>
+    <string name="txt_config_decoder">Config Frame Decoder</string>
+    <string name="txt_config_render">Config Frame Render</string>
+    <string name="txt_config_mirror">Config Preview Mirror</string>
+    <string name="txt_config_orientation">Config Preview Orientation</string>
 </resources>

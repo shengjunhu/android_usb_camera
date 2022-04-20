@@ -58,7 +58,7 @@ public:
     int connectDevice(int fd);
     int openDevice(int vendorId, int productId, int bus_num, int dev_num);
     int getSupportInfo(std::vector<SupportInfo> &supportInfo);
-    int setConfigInfo(SupportInfo &configInfo);
+    int setSupportInfo(SupportInfo &configInfo);
     int setFrameProcess(FrameProcess *process);
     int setPreview(ANativeWindow* window);
     int startStream();

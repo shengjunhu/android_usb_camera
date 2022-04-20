@@ -62,7 +62,7 @@ int FrameProcess::renderFrame(uint8_t *src){
     if (preview != nullptr){
         return (preview->*render)(src);
     } else {
-        LOGE("decodeFrame failed.");
+        //LOGW("Frame not to render.");
         return STATUS_NONE_INIT;
     }
 }
@@ -97,7 +97,7 @@ int FrameProcess::decodeFrame(uint8_t *src, size_t size, uint8_t *dst){
     if (pixel_size != 0){
         return (decoder->*decode)(src, size, dst);
     } else {
-        LOGE("decodeFrame failed.");
+        LOGW("Frame not to decode.");
         return STATUS_NONE_INIT;
     }
 }
