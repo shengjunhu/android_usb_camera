@@ -1,4 +1,4 @@
-# android_uvc_camera
+# android_usb_camera
 🔥 Usb Camera on Android
 
 ### Image
@@ -18,10 +18,10 @@
 - GitHub: https://github.com/shengjunhu
 
 ### About Third Party Libraries
-- [libjpeg-turbo][2]
-- [libyuv][3]
-- [libusb][4]
-- [libuvc][5]
+- [libusb][2]
+- [libuvc][3]
+- [libyuv][4]
+- [libjpeg-turbo][5]
 
 ### About License
 ```
@@ -30,7 +30,7 @@ Please comply with the relevant third party libraries license
 ```
 
 [1]: https://github.com/shengjunhu/android_usb_camera/raw/master/doc/apk/android_usb_camera.apk
-[2]: https://github.com/libjpeg-turbo/libjpeg-turbo
-[3]: https://chromium.googlesource.com/external/libyuv
-[4]: https://github.com/libusb/libusb
-[5]: https://github.com/libuvc/libuvc
+[2]: https://github.com/libusb/libusb
+[3]: https://github.com/libuvc/libuvc
+[4]: https://chromium.googlesource.com/external/libyuv
+[5]: https://github.com/libjpeg-turbo/libjpeg-turbo

@@ -1,3 +1,3 @@
-rootProject.name='android_usb_camera'
-include ':sample'
-include ':sdk_usb_camera'
+rootProject.name='android_uvc_camera'
+include ':app'
+include ':sdk_uvc_camera'

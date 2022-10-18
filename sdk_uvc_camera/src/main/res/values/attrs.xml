@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--UsbCameraView-->
+    <declare-styleable name="CameraView">
+        <attr name="content_view" format="enum">
+            <enum name="SurfaceView" value="0" />
+            <enum name="GLSurfaceView" value="1" />
+        </attr>
+    </declare-styleable>
+</resources>

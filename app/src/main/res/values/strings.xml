@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">UsbCamera</string>
+    <string name="txt_item_config">Config</string>
+    <string name="txt_author_email">shengjunhu@foxmail.com</string>
+    <string name="txt_usb_camera">Usb Camera</string>
+    <string name="txt_support_format">Support Format</string>
+    <string name="txt_support_size">Support Size</string>
+    <string name="txt_frame_decoder">Frame Decoder</string>
+    <string name="txt_frame_render">Frame Render</string>
+    <string name="txt_display_mirror">Display Mirror</string>
+    <string name="txt_display_orientation">Display Orientation</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="txt_confirm">Confirm</string>
+    <string name="txt_select_camera">Select Camera</string>
+    <string name="txt_config_format">Config Support Format</string>
+    <string name="txt_config_size">Config Support Size</string>
+    <string name="txt_config_decoder">Config Frame Decoder</string>
+    <string name="txt_config_render">Config Frame Render</string>
+    <string name="txt_config_mirror">Config Preview Mirror</string>
+    <string name="txt_config_orientation">Config Preview Orientation</string>
+    <string name="txt_not_found_device">USB device not found.</string>
+    <string name="txt_not_found_format">Support formats not found.</string>
+    <string name="txt_hint_config_format">Please config support format at first.</string>
+    <string name="txt_open_device_failed">Open usb device failed.</string>
+    <string name="txt_usb_permission_denied">Usb Permission had been denied.</string>
+    <string name="txt_get_support_failed">Get camera support info failed: </string>
+    <string name="txt_open_camera_failed">Open camera failed: </string>
+    <string name="txt_set_support_failed">Set support info failed.</string>
+</resources>
